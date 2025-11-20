@@ -76,6 +76,8 @@ export function AuthForm({ onAuthSuccess }: AuthFormProps) {
       let description = 'There was a problem with your request.';
       if (error.code === 'auth/invalid-credential') {
         description = 'Invalid email or password. Please try again.';
+      } else if (error.code === 'auth/email-already-in-use') {
+        description = 'This email is already in use. Please sign in or use a different email.';
       } else if (error.message) {
         description = error.message;
       }
