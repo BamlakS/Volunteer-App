@@ -6,14 +6,9 @@ import { useAuth, useCollection, useFirestore, useMemoFirebase } from '@/firebas
 import { ProjectCard } from '@/components/project-card';
 import { Button } from '@/components/ui/button';
 import { PlusCircle } from 'lucide-react';
-import {
-  Dialog,
-  DialogContent,
-  DialogTrigger,
-} from '@/components/ui/dialog';
-import { CreateProjectForm } from '@/components/create-project-form';
 import { Skeleton } from '@/components/ui/skeleton';
 import type { Project } from '@/lib/types';
+import Link from 'next/link';
 
 function ProjectList() {
   const firestore = useFirestore();
@@ -43,12 +38,12 @@ function ProjectList() {
             <h3 className="text-xl font-semibold">No projects available right now.</h3>
             <p className="text-muted-foreground mt-2 mb-4">Be the first to create one!</p>
              {user && (
-                <DialogTrigger asChild>
-                    <Button>
-                    <PlusCircle className="mr-2 h-4 w-4" />
+                <Button asChild>
+                    <Link href="/create-project">
+                        <PlusCircle className="mr-2 h-4 w-4" />
                         Create a Project
-                    </Button>
-                </DialogTrigger>
+                    </Link>
+                </Button>
             )}
         </div>
     );
@@ -66,37 +61,31 @@ function ProjectList() {
 
 export default function HomePage() {
   const { user } = useAuth();
-  const [dialogOpen, setDialogOpen] = React.useState(false);
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <header className="mb-8">
-          <div className="text-left">
-            <h1 className="text-4xl md:text-5xl font-headline font-bold mb-2">
-              Find Your Next Volunteer Project
-            </h1>
-            <p className="text-lg text-muted-foreground max-w-2xl">
-              Connect with non-profits and use your tech skills for good. Browse
-              projects, find your fit, and start making a difference today.
-            </p>
+      <header className="mb-8">
+        <div className="text-left">
+          <h1 className="text-4xl md:text-5xl font-headline font-bold mb-2">
+            Find Your Next Volunteer Project
+          </h1>
+          <p className="text-lg text-muted-foreground max-w-2xl">
+            Connect with non-profits and use your tech skills for good. Browse
+            projects, find your fit, and start making a difference today.
+          </p>
+        </div>
+        {user && (
+           <div className="mt-6">
+              <Button size="lg" asChild>
+                <Link href="/create-project">
+                  <PlusCircle className="mr-2 h-5 w-5" />
+                  Create New Project
+                </Link>
+              </Button>
           </div>
-          {user && (
-             <div className="mt-6">
-                <DialogTrigger asChild>
-                    <Button size="lg">
-                    <PlusCircle className="mr-2 h-5 w-5" />
-                    Create New Project
-                    </Button>
-                </DialogTrigger>
-            </div>
-          )}
-        </header>
-        <ProjectList />
-        <DialogContent className="sm:max-w-[480px]">
-            <CreateProjectForm onProjectCreated={() => setDialogOpen(false)} />
-        </DialogContent>
-      </Dialog>
+        )}
+      </header>
+      <ProjectList />
     </div>
   );
 }

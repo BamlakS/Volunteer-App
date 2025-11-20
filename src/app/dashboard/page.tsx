@@ -6,15 +6,10 @@ import { useAuth, useCollection, useFirestore, useMemoFirebase } from '@/firebas
 import { ProjectCard } from '@/components/project-card';
 import { Button } from '@/components/ui/button';
 import { PlusCircle } from 'lucide-react';
-import {
-  Dialog,
-  DialogContent,
-  DialogTrigger,
-} from '@/components/ui/dialog';
-import { CreateProjectForm } from '@/components/create-project-form';
 import { Skeleton } from '@/components/ui/skeleton';
 import type { Project } from '@/lib/types';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 
 function UserProjectList({ onOpenCreateDialog }: { onOpenCreateDialog: () => void }) {
   const firestore = useFirestore();
@@ -48,9 +43,11 @@ function UserProjectList({ onOpenCreateDialog }: { onOpenCreateDialog: () => voi
         <div className="text-center py-16 bg-muted/50 rounded-lg flex flex-col items-center justify-center">
             <h3 className="text-xl font-semibold">No projects yet!</h3>
             <p className="text-muted-foreground mt-2 mb-4">You haven't created any projects. Get started by creating one.</p>
-            <Button onClick={onOpenCreateDialog}>
-              <PlusCircle className="mr-2 h-4 w-4" />
-              Create Your First Project
+            <Button asChild>
+                <Link href="/create-project">
+                    <PlusCircle className="mr-2 h-4 w-4" />
+                    Create Your First Project
+                </Link>
             </Button>
         </div>
     );
@@ -68,7 +65,6 @@ function UserProjectList({ onOpenCreateDialog }: { onOpenCreateDialog: () => voi
 
 export default function DashboardPage() {
   const { user, loading } = useAuth();
-  const [dialogOpen, setDialogOpen] = React.useState(false);
   const router = useRouter();
 
   React.useEffect(() => {
@@ -101,7 +97,6 @@ export default function DashboardPage() {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <header className="mb-8">
            <div className="text-left">
             <h1 className="text-4xl md:text-5xl font-headline font-bold mb-2">
@@ -112,22 +107,18 @@ export default function DashboardPage() {
             </p>
           </div>
            <div className="mt-6">
-                <DialogTrigger asChild>
-                    <Button size="lg">
-                    <PlusCircle className="mr-2 h-5 w-5" />
-                    Create New Project
-                    </Button>
-                </DialogTrigger>
+                <Button size="lg" asChild>
+                    <Link href="/create-project">
+                        <PlusCircle className="mr-2 h-5 w-5" />
+                        Create New Project
+                    </Link>
+                </Button>
             </div>
         </header>
         <section className="mt-12">
           <h2 className="text-2xl font-bold font-headline mb-6">My Projects</h2>
-          <UserProjectList onOpenCreateDialog={() => setDialogOpen(true)} />
+          <UserProjectList onOpenCreateDialog={() => router.push('/create-project')} />
         </section>
-        <DialogContent className="sm:max-w-[480px]">
-          <CreateProjectForm onProjectCreated={() => setDialogOpen(false)} />
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }

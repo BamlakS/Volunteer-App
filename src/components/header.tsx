@@ -24,10 +24,10 @@ import {
   DialogTrigger,
 } from './ui/dialog';
 import React from 'react';
-import { CreateProjectForm } from './create-project-form';
 
 const navLinks = [
   { href: '/', label: 'Projects' },
+  { href: '/create-project', label: 'Create Project', auth: true },
   { href: '/volunteers', label: 'Volunteers' },
   { href: '/messages', label: 'Messages' },
 ];
@@ -37,7 +37,6 @@ export function Header() {
   const { user, loading } = useAuth();
   const { toast } = useToast();
   const [authDialogOpen, setAuthDialogOpen] = React.useState(false);
-  const [createProjectDialogOpen, setCreateProjectDialogOpen] = React.useState(false);
   const router = useRouter();
 
 
@@ -62,7 +61,7 @@ export function Header() {
   
   const handleAuthSuccess = () => {
     setAuthDialogOpen(false);
-    // This is handled by the auth form now
+    router.refresh();
   };
 
   return (
@@ -75,20 +74,23 @@ export function Header() {
           </span>
         </Link>
         <nav className="hidden md:flex items-center space-x-6 text-sm font-medium">
-          {navLinks.map((link) => (
-            <Link
-              key={link.href}
-              href={link.href}
-              className={cn(
-                'transition-colors hover:text-foreground/80',
-                pathname === link.href
-                  ? 'text-foreground'
-                  : 'text-foreground/60'
-              )}
-            >
-              {link.label}
-            </Link>
-          ))}
+          {navLinks.map((link) => {
+            if (link.auth && !user) return null;
+            return (
+              <Link
+                key={link.href}
+                href={link.href}
+                className={cn(
+                  'transition-colors hover:text-foreground/80',
+                  pathname === link.href
+                    ? 'text-foreground'
+                    : 'text-foreground/60'
+                )}
+              >
+                {link.label}
+              </Link>
+            )
+          })}
            {user && (
             <Link
               href="/dashboard"
@@ -108,18 +110,6 @@ export function Header() {
             <div className="h-8 w-8 bg-muted rounded-full animate-pulse" />
           ) : user ? (
             <>
-            <Dialog open={createProjectDialogOpen} onOpenChange={setCreateProjectDialogOpen}>
-                <DialogTrigger asChild>
-                    <Button variant="ghost" size="sm">
-                    <PlusCircle className="mr-2 h-4 w-4" />
-                    Create Project
-                    </Button>
-                </DialogTrigger>
-                <DialogContent>
-                    <CreateProjectForm onProjectCreated={() => setCreateProjectDialogOpen(false)} />
-                </DialogContent>
-            </Dialog>
-
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button
@@ -151,6 +141,9 @@ export function Header() {
                 <DropdownMenuSeparator />
                  <DropdownMenuItem asChild>
                   <Link href="/dashboard">Dashboard</Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href="/create-project">Create Project</Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={handleSignOut}>

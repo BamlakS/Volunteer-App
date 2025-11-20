@@ -22,7 +22,6 @@ import { addDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { collection } from 'firebase/firestore';
 import { SKILLS } from '@/lib/skills';
 import { Badge } from './ui/badge';
-import { DialogHeader, DialogTitle, DialogDescription } from './ui/dialog';
 
 const projectSchema = z.object({
   title: z.string().min(5, { message: 'Title must be at least 5 characters.' }),
@@ -98,13 +97,6 @@ export function CreateProjectForm({ onProjectCreated }: CreateProjectFormProps) 
   };
 
   return (
-    <>
-    <DialogHeader>
-        <DialogTitle>Create a New Project</DialogTitle>
-        <DialogDescription>
-            Fill out the details below to list your project for volunteers.
-        </DialogDescription>
-    </DialogHeader>
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 pt-4">
         <FormField
@@ -181,8 +173,5 @@ export function CreateProjectForm({ onProjectCreated }: CreateProjectFormProps) 
         </Button>
       </form>
     </Form>
-    </>
   );
 }
-
-    
