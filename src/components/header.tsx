@@ -18,7 +18,14 @@ import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import { signOut } from '@/firebase/auth/auth-service';
 import { useToast } from '@/hooks/use-toast';
 import { AuthForm } from './auth-form';
-import { Dialog, DialogContent, DialogTrigger } from './ui/dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from './ui/dialog';
 import React from 'react';
 
 const navLinks = [
@@ -127,6 +134,12 @@ export function Header() {
                 </DialogTrigger>
               </div>
               <DialogContent className="sm:max-w-[425px]">
+                <DialogHeader>
+                  <DialogTitle>Welcome to VolunteerConnect</DialogTitle>
+                  <DialogDescription>
+                    Sign in to your account or create a new one to get started.
+                  </DialogDescription>
+                </DialogHeader>
                 <AuthForm onAuthSuccess={() => setDialogOpen(false)} />
               </DialogContent>
             </Dialog>
