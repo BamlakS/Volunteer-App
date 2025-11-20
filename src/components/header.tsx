@@ -24,6 +24,7 @@ import {
   DialogTrigger,
 } from './ui/dialog';
 import React from 'react';
+import { CreateProjectForm } from './create-project-form';
 
 const navLinks = [
   { href: '/', label: 'Projects' },
@@ -60,7 +61,7 @@ export function Header() {
   
   const handleAuthSuccess = () => {
     setAuthDialogOpen(false);
-    // The useAuth hook will trigger a re-render automatically
+    router.refresh();
   };
 
   return (
