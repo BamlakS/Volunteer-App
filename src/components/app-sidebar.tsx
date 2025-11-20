@@ -161,17 +161,21 @@ export function AppSidebar() {
       </SidebarHeader>
 
       <SidebarContent className="p-2">
-        <div className="flex flex-col gap-2">
-          <Button asChild variant="default" size="lg">
-            <Link href="/create-project">
-              <PlusCircle />
-              <span>Create Project</span>
-            </Link>
-          </Button>
-        </div>
+        { user && (
+          <div className="flex flex-col gap-2">
+            <Button asChild variant="default" size="lg">
+              <Link href="/create-project">
+                <PlusCircle />
+                <span>Create Project</span>
+              </Link>
+            </Button>
+          </div>
+        )}
 
         <SidebarMenu className="mt-4">
           {navLinks.map((link) => {
+            // Conditionally render the "Create Project" link for authenticated users
+            if (link.href === '/create-project' && !user) return null;
             if (link.auth && !user) return null;
             const isActive = pathname === link.href;
             return (
