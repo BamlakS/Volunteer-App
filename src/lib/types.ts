@@ -35,3 +35,11 @@ export type Conversation = {
   lastMessageTimestamp: string;
   messages: Message[];
 };
+
+export type UserProfile = {
+  id: string;
+  name: string;
+  email: string;
+  avatarUrl: string;
+  role: 'volunteer' | 'non-profit';
+};
