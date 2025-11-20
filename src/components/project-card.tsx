@@ -5,7 +5,7 @@ import { Heart, Clock, User, Trash2 } from 'lucide-react';
 import type { Project } from '@/lib/types';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
+import { Button, buttonVariants } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
@@ -153,8 +153,8 @@ export function ProjectCard({ project }: { project: Project }) {
         </div>
       </CardContent>
       <CardFooter>
-        <Button className="w-full" onClick={handleSelectProject}>
-          Select Project
+        <Button className="w-full" onClick={handleSelectProject} disabled={isOwner}>
+          {isOwner ? "This is your project" : "Select Project"}
         </Button>
       </CardFooter>
     </Card>

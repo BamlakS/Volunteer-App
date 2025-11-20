@@ -21,9 +21,9 @@ import { AuthForm } from './auth-form';
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
   DialogTrigger,
 } from './ui/dialog';
 import React from 'react';
@@ -81,6 +81,19 @@ export function Header() {
               {link.label}
             </Link>
           ))}
+           {user && (
+            <Link
+              href="/dashboard"
+              className={cn(
+                'transition-colors hover:text-foreground/80',
+                pathname === '/dashboard'
+                  ? 'text-foreground'
+                  : 'text-foreground/60'
+              )}
+            >
+              Dashboard
+            </Link>
+          )}
         </nav>
         <div className="flex flex-1 items-center justify-end space-x-4">
           {loading ? (
@@ -115,6 +128,10 @@ export function Header() {
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
+                 <DropdownMenuItem asChild>
+                  <Link href="/dashboard">Dashboard</Link>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={handleSignOut}>
                   <LogOut className="mr-2 h-4 w-4" />
                   <span>Log out</span>
@@ -134,12 +151,6 @@ export function Header() {
                 </DialogTrigger>
               </div>
               <DialogContent className="sm:max-w-[425px]">
-                <DialogHeader>
-                  <DialogTitle>Welcome to VolunteerConnect</DialogTitle>
-                  <DialogDescription>
-                    Sign in to your account or create a new one to get started.
-                  </DialogDescription>
-                </DialogHeader>
                 <AuthForm onAuthSuccess={() => setDialogOpen(false)} />
               </DialogContent>
             </Dialog>
