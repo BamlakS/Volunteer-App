@@ -102,31 +102,25 @@ export default function DashboardPage() {
   return (
     <div className="container mx-auto px-4 py-8">
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <header className="mb-12">
-           <div className="flex justify-between items-start">
-            <div className="text-left">
-              <h1 className="text-4xl md:text-5xl font-headline font-bold mb-2">
-                My Dashboard
-              </h1>
-              <p className="text-lg text-muted-foreground max-w-2xl">
-                Manage your created projects and view your contributions.
-              </p>
-            </div>
-            <DialogTrigger asChild>
-                <Button className="hidden sm:inline-flex">
-                <PlusCircle className="mr-2 h-4 w-4" />
-                Create New Project
-                </Button>
-            </DialogTrigger>
+        <header className="mb-8">
+           <div className="text-left">
+            <h1 className="text-4xl md:text-5xl font-headline font-bold mb-2">
+              My Dashboard
+            </h1>
+            <p className="text-lg text-muted-foreground max-w-2xl">
+              Manage your created projects and view your contributions.
+            </p>
           </div>
-           <DialogTrigger asChild>
-            <Button className="w-full sm:hidden mt-4">
-              <PlusCircle className="mr-2 h-4 w-4" />
-              Create New Project
-            </Button>
-          </DialogTrigger>
+           <div className="mt-6">
+                <DialogTrigger asChild>
+                    <Button size="lg">
+                    <PlusCircle className="mr-2 h-5 w-5" />
+                    Create New Project
+                    </Button>
+                </DialogTrigger>
+            </div>
         </header>
-        <section>
+        <section className="mt-12">
           <h2 className="text-2xl font-bold font-headline mb-6">My Projects</h2>
           <UserProjectList onOpenCreateDialog={() => setDialogOpen(true)} />
         </section>

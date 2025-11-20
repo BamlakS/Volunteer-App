@@ -110,7 +110,7 @@ export function Header() {
             <>
             <Dialog open={createProjectDialogOpen} onOpenChange={setCreateProjectDialogOpen}>
                 <DialogTrigger asChild>
-                    <Button>
+                    <Button variant="ghost" size="sm">
                     <PlusCircle className="mr-2 h-4 w-4" />
                     Create Project
                     </Button>
@@ -132,7 +132,7 @@ export function Header() {
                       alt={user.displayName || 'User'}
                     />
                     <AvatarFallback>
-                      {user.displayName?.charAt(0) || 'U'}
+                      {user.displayName?.charAt(0) || user.email?.charAt(0).toUpperCase() || 'U'}
                     </AvatarFallback>
                   </Avatar>
                 </Button>
@@ -167,7 +167,7 @@ export function Header() {
                   <Button variant="outline">Log In</Button>
                 </DialogTrigger>
                 <DialogTrigger asChild>
-                  <Button className="bg-accent text-accent-foreground hover:bg-accent/90">
+                  <Button>
                     Sign Up
                   </Button>
                 </DialogTrigger>

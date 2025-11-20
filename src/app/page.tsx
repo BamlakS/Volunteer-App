@@ -71,33 +71,25 @@ export default function HomePage() {
   return (
     <div className="container mx-auto px-4 py-8">
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <header className="mb-12">
-          <div className="flex justify-between items-start">
-            <div className="text-left">
-              <h1 className="text-4xl md:text-5xl font-headline font-bold mb-2">
-                Find Your Next Volunteer Project
-              </h1>
-              <p className="text-lg text-muted-foreground max-w-2xl">
-                Connect with non-profits and use your tech skills for good. Browse
-                projects, find your fit, and start making a difference today.
-              </p>
-            </div>
-            {user && (
-              <DialogTrigger asChild>
-                <Button className="hidden sm:inline-flex">
-                  <PlusCircle className="mr-2 h-4 w-4" />
-                  Create New Project
-                </Button>
-              </DialogTrigger>
-            )}
+        <header className="mb-8">
+          <div className="text-left">
+            <h1 className="text-4xl md:text-5xl font-headline font-bold mb-2">
+              Find Your Next Volunteer Project
+            </h1>
+            <p className="text-lg text-muted-foreground max-w-2xl">
+              Connect with non-profits and use your tech skills for good. Browse
+              projects, find your fit, and start making a difference today.
+            </p>
           </div>
           {user && (
-            <DialogTrigger asChild>
-              <Button className="w-full sm:hidden mt-4">
-                <PlusCircle className="mr-2 h-4 w-4" />
-                Create New Project
-              </Button>
-            </DialogTrigger>
+             <div className="mt-6">
+                <DialogTrigger asChild>
+                    <Button size="lg">
+                    <PlusCircle className="mr-2 h-5 w-5" />
+                    Create New Project
+                    </Button>
+                </DialogTrigger>
+            </div>
           )}
         </header>
         <ProjectList />
