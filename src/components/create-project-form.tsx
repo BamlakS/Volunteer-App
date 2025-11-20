@@ -22,6 +22,7 @@ import { addDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { collection } from 'firebase/firestore';
 import { SKILLS } from '@/lib/skills';
 import { Badge } from './ui/badge';
+import { useRouter } from 'next/navigation';
 
 const projectSchema = z.object({
   title: z.string().min(5, { message: 'Title must be at least 5 characters.' }),
@@ -39,6 +40,7 @@ export function CreateProjectForm({ onProjectCreated }: CreateProjectFormProps) 
   const [loading, setLoading] = useState(false);
   const { user } = useAuth();
   const firestore = useFirestore();
+  const router = useRouter();
 
   const form = useForm<z.infer<typeof projectSchema>>({
     resolver: zodResolver(projectSchema),
@@ -63,19 +65,31 @@ export function CreateProjectForm({ onProjectCreated }: CreateProjectFormProps) 
     
     try {
         const projectsCol = collection(firestore, 'projects');
-        await addDocumentNonBlocking(projectsCol, {
+        const newProject = {
             ...values,
             creatorId: user.uid,
             creatorName: user.displayName || 'Anonymous',
             creatorAvatarUrl: user.photoURL || '',
             createdAt: new Date(),
+        };
+
+        const docRefPromise = addDocumentNonBlocking(projectsCol, newProject);
+        
+        toast({
+            title: 'Project Created!',
+            description: 'Your new project has been listed successfully.',
         });
 
-      toast({
-        title: 'Project Created!',
-        description: 'Your new project has been listed successfully.',
-      });
-      onProjectCreated?.();
+        // Optimistically redirect
+        onProjectCreated?.();
+        
+        // Wait for the document to be created to get the ID for the redirect
+        const docRef = await docRefPromise;
+        if(docRef) {
+          // No redirect here, onProjectCreated handles it.
+        }
+
+
     } catch (error: any) {
       console.error('Error creating project:', error);
       toast({
