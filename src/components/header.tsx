@@ -1,8 +1,8 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { HandHeart, LogOut } from 'lucide-react';
+import { usePathname, useRouter } from 'next/navigation';
+import { HandHeart, LogOut, PlusCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from './ui/button';
 import { useAuth } from '@/firebase';
@@ -21,9 +21,6 @@ import { AuthForm } from './auth-form';
 import {
   Dialog,
   DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
   DialogTrigger,
 } from './ui/dialog';
 import React from 'react';
@@ -38,7 +35,10 @@ export function Header() {
   const pathname = usePathname();
   const { user, loading } = useAuth();
   const { toast } = useToast();
-  const [dialogOpen, setDialogOpen] = React.useState(false);
+  const [authDialogOpen, setAuthDialogOpen] = React.useState(false);
+  const [createProjectDialogOpen, setCreateProjectDialogOpen] = React.useState(false);
+  const router = useRouter();
+
 
   const handleSignOut = async () => {
     try {
@@ -47,6 +47,7 @@ export function Header() {
         title: 'Signed Out',
         description: "You've successfully signed out.",
       });
+      router.push('/');
     } catch (error) {
       console.error(error);
       toast({
@@ -55,6 +56,11 @@ export function Header() {
         description: 'There was a problem with your sign-out.',
       });
     }
+  };
+  
+  const handleAuthSuccess = () => {
+    setAuthDialogOpen(false);
+    // The useAuth hook will trigger a re-render automatically
   };
 
   return (
@@ -95,10 +101,23 @@ export function Header() {
             </Link>
           )}
         </nav>
-        <div className="flex flex-1 items-center justify-end space-x-4">
+        <div className="flex flex-1 items-center justify-end space-x-2">
           {loading ? (
             <div className="h-8 w-8 bg-muted rounded-full animate-pulse" />
           ) : user ? (
+            <>
+            <Dialog open={createProjectDialogOpen} onOpenChange={setCreateProjectDialogOpen}>
+                <DialogTrigger asChild>
+                    <Button>
+                    <PlusCircle className="mr-2 h-4 w-4" />
+                    Create Project
+                    </Button>
+                </DialogTrigger>
+                <DialogContent>
+                    <CreateProjectForm onProjectCreated={() => setCreateProjectDialogOpen(false)} />
+                </DialogContent>
+            </Dialog>
+
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button
@@ -138,8 +157,9 @@ export function Header() {
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
+            </>
           ) : (
-            <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+            <Dialog open={authDialogOpen} onOpenChange={setAuthDialogOpen}>
               <div className="flex items-center space-x-2">
                 <DialogTrigger asChild>
                   <Button variant="outline">Log In</Button>
@@ -151,7 +171,7 @@ export function Header() {
                 </DialogTrigger>
               </div>
               <DialogContent className="sm:max-w-[425px]">
-                <AuthForm onAuthSuccess={() => setDialogOpen(false)} />
+                <AuthForm onAuthSuccess={handleAuthSuccess} />
               </DialogContent>
             </Dialog>
           )}
