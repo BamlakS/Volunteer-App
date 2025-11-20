@@ -15,8 +15,9 @@ import { CreateProjectForm } from '@/components/create-project-form';
 import { Skeleton } from '@/components/ui/skeleton';
 import type { Project } from '@/lib/types';
 
-function ProjectList() {
+function ProjectList({ onOpenCreateDialog }: { onOpenCreateDialog: () => void }) {
   const firestore = useFirestore();
+  const { user } = useAuth();
   const projectsQuery = useMemoFirebase(() => collection(firestore, 'projects'), [firestore]);
   const { data: projects, isLoading } = useCollection<Project>(projectsQuery);
 
@@ -38,9 +39,15 @@ function ProjectList() {
 
   if (!projects || projects.length === 0) {
     return (
-        <div className="text-center py-16 text-muted-foreground">
-            <p>No projects available right now.</p>
-            <p>Be the first to create one!</p>
+        <div className="text-center py-16 bg-muted/50 rounded-lg flex flex-col items-center justify-center">
+            <h3 className="text-xl font-semibold">No projects available right now.</h3>
+            <p className="text-muted-foreground mt-2 mb-4">Be the first to create one!</p>
+            {user && (
+                 <Button onClick={onOpenCreateDialog}>
+                    <PlusCircle className="mr-2 h-4 w-4" />
+                    Create a Project
+                </Button>
+            )}
         </div>
     );
   }
@@ -61,32 +68,31 @@ export default function HomePage() {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <header className="flex justify-between items-center mb-12">
-        <div className="text-left">
-          <h1 className="text-4xl md:text-5xl font-headline font-bold mb-2">
-            Find Your Next Volunteer Project
-          </h1>
-          <p className="text-lg text-muted-foreground max-w-2xl">
-            Connect with non-profits and use your tech skills for good. Browse
-            projects, find your fit, and start making a difference today.
-          </p>
-        </div>
-        {user && (
-          <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <header className="flex justify-between items-center mb-12">
+          <div className="text-left">
+            <h1 className="text-4xl md:text-5xl font-headline font-bold mb-2">
+              Find Your Next Volunteer Project
+            </h1>
+            <p className="text-lg text-muted-foreground max-w-2xl">
+              Connect with non-profits and use your tech skills for good. Browse
+              projects, find your fit, and start making a difference today.
+            </p>
+          </div>
+          {user && (
             <DialogTrigger asChild>
               <Button>
                 <PlusCircle className="mr-2 h-4 w-4" />
                 Create Project
               </Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-[480px]">
-                <CreateProjectForm onProjectCreated={() => setDialogOpen(false)} />
-            </DialogContent>
-          </Dialog>
-        )}
-      </header>
-      <ProjectList />
+          )}
+        </header>
+        <ProjectList onOpenCreateDialog={() => setDialogOpen(true)} />
+        <DialogContent className="sm:max-w-[480px]">
+            <CreateProjectForm onProjectCreated={() => setDialogOpen(false)} />
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
-    
