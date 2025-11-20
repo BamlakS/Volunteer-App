@@ -16,7 +16,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import type { Project } from '@/lib/types';
 import { useRouter } from 'next/navigation';
 
-function UserProjectList() {
+function UserProjectList({ onOpenCreateDialog }: { onOpenCreateDialog: () => void }) {
   const firestore = useFirestore();
   const { user, loading: authLoading } = useAuth();
   
@@ -45,9 +45,13 @@ function UserProjectList() {
 
   if (!projects || projects.length === 0) {
     return (
-        <div className="text-center py-16 bg-muted/50 rounded-lg">
+        <div className="text-center py-16 bg-muted/50 rounded-lg flex flex-col items-center justify-center">
             <h3 className="text-xl font-semibold">No projects yet!</h3>
-            <p className="text-muted-foreground mt-2">You haven't created any projects. Get started by creating one.</p>
+            <p className="text-muted-foreground mt-2 mb-4">You haven't created any projects. Get started by creating one.</p>
+            <Button onClick={onOpenCreateDialog}>
+              <PlusCircle className="mr-2 h-4 w-4" />
+              Create Your First Project
+            </Button>
         </div>
     );
   }
@@ -97,31 +101,31 @@ export default function DashboardPage() {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <header className="flex justify-between items-center mb-12">
-        <div className="text-left">
-          <h1 className="text-4xl md:text-5xl font-headline font-bold mb-2">
-            My Dashboard
-          </h1>
-          <p className="text-lg text-muted-foreground max-w-2xl">
-            Manage your created projects and view your contributions.
-          </p>
-        </div>
-        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-            <DialogTrigger asChild>
-              <Button>
-                <PlusCircle className="mr-2 h-4 w-4" />
-                Create Project
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-[480px]">
-                <CreateProjectForm onProjectCreated={() => setDialogOpen(false)} />
-            </DialogContent>
-        </Dialog>
-      </header>
-      <section>
-        <h2 className="text-2xl font-bold font-headline mb-6">My Projects</h2>
-        <UserProjectList />
-      </section>
+      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <header className="flex justify-between items-center mb-12">
+          <div className="text-left">
+            <h1 className="text-4xl md:text-5xl font-headline font-bold mb-2">
+              My Dashboard
+            </h1>
+            <p className="text-lg text-muted-foreground max-w-2xl">
+              Manage your created projects and view your contributions.
+            </p>
+          </div>
+          <DialogTrigger asChild>
+            <Button>
+              <PlusCircle className="mr-2 h-4 w-4" />
+              Create Project
+            </Button>
+          </DialogTrigger>
+        </header>
+        <section>
+          <h2 className="text-2xl font-bold font-headline mb-6">My Projects</h2>
+          <UserProjectList onOpenCreateDialog={() => setDialogOpen(true)} />
+        </section>
+        <DialogContent className="sm:max-w-[480px]">
+          <CreateProjectForm onProjectCreated={() => setDialogOpen(false)} />
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
