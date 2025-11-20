@@ -53,15 +53,23 @@
       "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "Project",
       "type": "object",
-      "description": "Represents a project listed by a non-profit.",
+      "description": "Represents a project listed by a user.",
       "properties": {
         "id": {
           "type": "string",
           "description": "Unique identifier for the project."
         },
-        "nonProfitId": {
+        "creatorId": {
           "type": "string",
-          "description": "Reference to NonProfit. (Relationship: NonProfit 1:N Project)"
+          "description": "The UID of the user who created the project."
+        },
+        "creatorName": {
+          "type": "string",
+          "description": "The display name of the user who created the project."
+        },
+        "creatorAvatarUrl": {
+          "type": "string",
+          "description": "The avatar URL of the user who created the project."
         },
         "title": {
           "type": "string",
@@ -85,7 +93,8 @@
       },
       "required": [
         "id",
-        "nonProfitId",
+        "creatorId",
+        "creatorName",
         "title",
         "description",
         "requiredSkills",
@@ -216,7 +225,7 @@
           "schema": {
             "$ref": "#/backend/entities/Project"
           },
-          "description": "Stores project listings. Includes the 'nonProfitId' field for authorization independence.",
+          "description": "Stores project listings. Includes the 'creatorId' field for authorization.",
           "params": [
             {
               "name": "projectId",
@@ -278,6 +287,7 @@
         }
       }
     ],
-    "reasoning": "The Firestore structure is designed to support VolunteerConnect's core features (Project Listing, Volunteer Profiles, Project Selection, and Communication Portal) while adhering to the principles of Authorization Independence, Clarity of Intent, DBAC (Database-Based Access Control), QAPs (Rules are not Filters), and Invariants.  Authorization Independence is achieved through denormalization; specifically, the `projects` collection includes the `nonProfitId`, enabling rules to validate project ownership without resorting to `get()` calls. The `messages` subcollection of `chats` denormalizes both `senderId` and `recipientId`, allowing message access control based solely on the message document itself. Structural Segregation is implemented by storing volunteers' private data under `/users/{userId}/volunteerProfile` to ensure that only the volunteer can access their profile. Collaborative data (ProjectVolunteer assignments) is modeled using a dedicated collection `/projectVolunteers`. QAPs are supported through structural segregation, as list operations are inherently scoped to collections with uniform security requirements.\n\nThe key collections and subcollections are:\n\n*   `/nonProfits/{nonProfitId}`: Stores non-profit organization profiles.\n*   `/projects/{projectId}`: Stores project listings. Includes the `nonProfitId` field for authorization.\n*   `/users/{userId}/volunteerProfile`: Stores individual volunteer profiles.  Access is restricted to the authenticated user.\n*   `/projectVolunteers/{projectVolunteerId}`: Stores the many-to-many relationships between projects and volunteers.\n*   `/chats/{chatId}/messages/{messageId}`: Stores messages within a chat between a non-profit and a volunteer. Includes `senderId` and `recipientId` for authorization."
+    "reasoning": "The Firestore structure is designed to support VolunteerConnect's core features (Project Listing, Volunteer Profiles, Project Selection, and Communication Portal) while adhering to the principles of Authorization Independence, Clarity of Intent, DBAC (Database-Based Access Control), QAPs (Rules are not Filters), and Invariants.  Authorization Independence is achieved through denormalization; specifically, the `projects` collection includes the `creatorId`, enabling rules to validate project ownership without resorting to `get()` calls. The `messages` subcollection of `chats` denormalizes both `senderId` and `recipientId`, allowing message access control based solely on the message document itself. Structural Segregation is implemented by storing volunteers' private data under `/users/{userId}/volunteerProfile` to ensure that only the volunteer can access their profile. Collaborative data (ProjectVolunteer assignments) is modeled using a dedicated collection `/projectVolunteers`.\n\nThe key collections and subcollections are:\n\n*   `/nonProfits/{nonProfitId}`: Stores non-profit organization profiles.\n*   `/projects/{projectId}`: Stores project listings. Includes the `nonProfitId` field for authorization.\n*   `/users/{userId}/volunteerProfile`: Stores individual volunteer profiles.  Access is restricted to the authenticated user.\n*   `/projectVolunteers/{projectVolunteerId}`: Stores the many-to-many relationships between projects and volunteers.\n*   `/chats/{chatId}/messages/{messageId}`: Stores messages within a chat between a non-profit and a volunteer. Includes `senderId` and `recipientId` for authorization."
   }
 }
+    

@@ -1,13 +1,14 @@
 'use client';
 
 import { useState } from 'react';
-import { Heart, Clock, Users } from 'lucide-react';
+import { Heart, Clock, User } from 'lucide-react';
 import type { Project } from '@/lib/types';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
+import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 
 export function ProjectCard({ project }: { project: Project }) {
   const [isFavorited, setIsFavorited] = useState(false);
@@ -36,8 +37,11 @@ export function ProjectCard({ project }: { project: Project }) {
           <div className="flex-grow">
             <CardTitle className="font-headline text-xl mb-1">{project.title}</CardTitle>
             <CardDescription className="flex items-center gap-2 text-sm">
-              <Users className="h-4 w-4" />
-              {project.nonprofit}
+                <Avatar className="h-5 w-5">
+                    <AvatarImage src={project.creatorAvatarUrl} />
+                    <AvatarFallback><User /></AvatarFallback>
+                </Avatar>
+              <span>{project.creatorName}</span>
             </CardDescription>
           </div>
           <Button
@@ -81,3 +85,5 @@ export function ProjectCard({ project }: { project: Project }) {
     </Card>
   );
 }
+
+    

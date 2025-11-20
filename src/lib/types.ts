@@ -3,10 +3,12 @@ export type Skill = 'React' | 'Node.js' | 'UI/UX Design' | 'Project Management' 
 export type Project = {
   id: string;
   title: string;
-  nonprofit: string;
   description: string;
   skills: Skill[];
   timeCommitment: string;
+  creatorId: string;
+  creatorName: string;
+  creatorAvatarUrl?: string;
 };
 
 export type Volunteer = {
@@ -40,6 +42,8 @@ export type UserProfile = {
   id: string;
   name: string;
   email: string;
-  avatarUrl: string;
+  avatarUrl:string;
   role: 'volunteer' | 'non-profit';
 };
+
+    
