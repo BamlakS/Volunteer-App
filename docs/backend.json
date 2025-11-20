@@ -1,93 +1,283 @@
 {
   "entities": {
-    "VolunteerProfile": {
-      "title": "Volunteer Profile",
+    "Volunteer": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Volunteer",
+      "type": "object",
       "description": "Represents a volunteer user in the system.",
-      "type": "object",
       "properties": {
-        "id": { "type": "string", "description": "The volunteer's unique ID, matching their Auth UID." },
-        "name": { "type": "string", "description": "The volunteer's full name." },
-        "email": { "type": "string", "format": "email", "description": "The volunteer's email address." },
-        "avatarUrl": { "type": "string", "format": "uri", "description": "URL for the volunteer's profile picture." },
-        "tagline": { "type": "string", "description": "A short, catchy phrase describing the volunteer." },
-        "skills": { "type": "array", "items": { "type": "string" }, "description": "A list of the volunteer's skills." },
-        "experience": { "type": "string", "description": "A summary of the volunteer's professional experience." },
-        "availability": { "type": "string", "description": "The volunteer's general availability (e.g., 'Evenings & Weekends')." }
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the volunteer."
+        },
+        "firstName": {
+          "type": "string",
+          "description": "The volunteer's first name."
+        },
+        "lastName": {
+          "type": "string",
+          "description": "The volunteer's last name."
+        },
+        "email": {
+          "type": "string",
+          "description": "The volunteer's email address.",
+          "format": "email"
+        },
+        "skills": {
+          "type": "array",
+          "description": "List of skills the volunteer possesses.",
+          "items": {
+            "type": "string"
+          }
+        },
+        "experience": {
+          "type": "string",
+          "description": "Description of the volunteer's relevant experience."
+        },
+        "availability": {
+          "type": "string",
+          "description": "The volunteer's availability (e.g., days/hours per week)."
+        }
       },
-      "required": ["id", "name", "email"]
-    },
-    "NonProfitProfile": {
-      "title": "Non-Profit Profile",
-      "description": "Represents a non-profit organization user.",
-      "type": "object",
-      "properties": {
-        "id": { "type": "string", "description": "The non-profit's unique ID, matching their Auth UID." },
-        "name": { "type": "string", "description": "The organization's name." },
-        "email": { "type": "string", "format": "email", "description": "The organization's contact email." },
-        "website": { "type": "string", "format": "uri", "description": "URL for the non-profit's website." }
-      },
-      "required": ["id", "name", "email"]
+      "required": [
+        "id",
+        "firstName",
+        "lastName",
+        "email",
+        "skills",
+        "experience",
+        "availability"
+      ]
     },
     "Project": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "Project",
-      "description": "A specific project posted by a non-profit.",
       "type": "object",
+      "description": "Represents a project listed by a non-profit.",
       "properties": {
-        "id": { "type": "string", "description": "The project's unique ID." },
-        "nonProfitId": { "type": "string", "description": "The ID of the owning non-profit." },
-        "title": { "type": "string", "description": "The project title." },
-        "description": { "type": "string", "description": "A detailed description of the project." },
-        "skills": { "type": "array", "items": { "type": "string" }, "description": "Skills required for the project." },
-        "timeCommitment": { "type": "string", "description": "Expected time commitment from volunteers." }
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the project."
+        },
+        "nonProfitId": {
+          "type": "string",
+          "description": "Reference to NonProfit. (Relationship: NonProfit 1:N Project)"
+        },
+        "title": {
+          "type": "string",
+          "description": "The title of the project."
+        },
+        "description": {
+          "type": "string",
+          "description": "A detailed description of the project."
+        },
+        "requiredSkills": {
+          "type": "array",
+          "description": "List of skills required for the project.",
+          "items": {
+            "type": "string"
+          }
+        },
+        "estimatedTimeCommitment": {
+          "type": "string",
+          "description": "Estimated time commitment for the project (e.g., hours per week, total duration)."
+        }
       },
-      "required": ["id", "nonProfitId", "title", "description"]
+      "required": [
+        "id",
+        "nonProfitId",
+        "title",
+        "description",
+        "requiredSkills",
+        "estimatedTimeCommitment"
+      ]
     },
-    "VolunteerProject": {
-      "title": "Volunteer-Project Link",
-      "description": "A record linking a volunteer to a project they have selected.",
+    "NonProfit": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "NonProfit",
       "type": "object",
+      "description": "Represents a non-profit organization.",
       "properties": {
-        "volunteerId": { "type": "string", "description": "The ID of the volunteer." },
-        "projectId": { "type": "string", "description": "The ID of the project." }
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the non-profit."
+        },
+        "name": {
+          "type": "string",
+          "description": "The name of the non-profit organization."
+        },
+        "description": {
+          "type": "string",
+          "description": "A description of the non-profit organization."
+        },
+        "contactEmail": {
+          "type": "string",
+          "description": "The contact email address for the non-profit organization.",
+          "format": "email"
+        }
       },
-      "required": ["volunteerId", "projectId"]
+      "required": [
+        "id",
+        "name",
+        "description",
+        "contactEmail"
+      ]
+    },
+    "ProjectVolunteer": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "ProjectVolunteer",
+      "type": "object",
+      "description": "Represents the association between a Project and a Volunteer (Many-to-Many relationship).",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for this ProjectVolunteer association."
+        },
+        "projectId": {
+          "type": "string",
+          "description": "Reference to Project. (Relationship: Project N:N Volunteer)"
+        },
+        "volunteerId": {
+          "type": "string",
+          "description": "Reference to Volunteer. (Relationship: Project N:N Volunteer)"
+        }
+      },
+      "required": [
+        "id",
+        "projectId",
+        "volunteerId"
+      ]
     },
     "Message": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "Message",
-      "description": "A message sent between two users.",
       "type": "object",
+      "description": "Represents a message exchanged between a non-profit and a volunteer.",
       "properties": {
-        "senderId": { "type": "string" },
-        "recipientId": { "type": "string" },
-        "text": { "type": "string" },
-        "timestamp": { "type": "string", "format": "date-time" }
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the message."
+        },
+        "senderId": {
+          "type": "string",
+          "description": "ID of the user sending the message (can be NonProfit or Volunteer)."
+        },
+        "recipientId": {
+          "type": "string",
+          "description": "ID of the user receiving the message (can be NonProfit or Volunteer)."
+        },
+        "messageText": {
+          "type": "string",
+          "description": "The content of the message."
+        },
+        "timestamp": {
+          "type": "string",
+          "description": "Timestamp of when the message was sent.",
+          "format": "date-time"
+        }
       },
-      "required": ["senderId", "recipientId", "text", "timestamp"]
+      "required": [
+        "id",
+        "senderId",
+        "recipientId",
+        "messageText",
+        "timestamp"
+      ]
     }
   },
   "auth": {
-    "providers": ["google.com", "password"]
+    "providers": [
+      "password",
+      "anonymous"
+    ]
   },
   "firestore": {
-    "/volunteers/{volunteerId}": {
-      "schema": { "$ref": "#/entities/VolunteerProfile" },
-      "description": "Stores public profiles for all volunteers."
-    },
-    "/nonprofits/{nonProfitId}": {
-      "schema": { "$ref": "#/entities/NonProfitProfile" },
-      "description": "Stores public profiles for all non-profit organizations."
-    },
-    "/nonprofits/{nonProfitId}/projects/{projectId}": {
-      "schema": { "$ref": "#/entities/Project" },
-      "description": "Stores projects, nested under the non-profit that owns them."
-    },
-    "/volunteerProjects/{volunteerProjectId}": {
-      "schema": { "$ref": "#/entities/VolunteerProject" },
-      "description": "A collection linking volunteers to the projects they've signed up for. This facilitates many-to-many relationships."
-    },
-    "/messages/{messageId}": {
-      "schema": { "$ref": "#/entities/Message" },
-      "description": "A collection for all messages. Security rules ensure that a message can only be read by the sender and recipient."
-    }
+    "structure": [
+      {
+        "path": "/nonProfits/{nonProfitId}",
+        "definition": {
+          "entityName": "NonProfit",
+          "schema": {
+            "$ref": "#/backend/entities/NonProfit"
+          },
+          "description": "Stores non-profit organization profiles.",
+          "params": [
+            {
+              "name": "nonProfitId",
+              "description": "Unique identifier for the non-profit organization."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/projects/{projectId}",
+        "definition": {
+          "entityName": "Project",
+          "schema": {
+            "$ref": "#/backend/entities/Project"
+          },
+          "description": "Stores project listings. Includes the 'nonProfitId' field for authorization independence.",
+          "params": [
+            {
+              "name": "projectId",
+              "description": "Unique identifier for the project."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/volunteerProfile",
+        "definition": {
+          "entityName": "Volunteer",
+          "schema": {
+            "$ref": "#/backend/entities/Volunteer"
+          },
+          "description": "Stores individual volunteer profiles.  Access is restricted to the authenticated user.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "Unique identifier for the user (volunteer)."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/projectVolunteers/{projectVolunteerId}",
+        "definition": {
+          "entityName": "ProjectVolunteer",
+          "schema": {
+            "$ref": "#/backend/entities/ProjectVolunteer"
+          },
+          "description": "Stores the many-to-many relationships between projects and volunteers.",
+          "params": [
+            {
+              "name": "projectVolunteerId",
+              "description": "Unique identifier for the ProjectVolunteer association."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/chats/{chatId}/messages/{messageId}",
+        "definition": {
+          "entityName": "Message",
+          "schema": {
+            "$ref": "#/backend/entities/Message"
+          },
+          "description": "Stores messages within a chat between a non-profit and a volunteer. Includes 'senderId' and 'recipientId' for authorization.",
+          "params": [
+            {
+              "name": "chatId",
+              "description": "Unique identifier for the chat."
+            },
+            {
+              "name": "messageId",
+              "description": "Unique identifier for the message."
+            }
+          ]
+        }
+      }
+    ],
+    "reasoning": "The Firestore structure is designed to support VolunteerConnect's core features (Project Listing, Volunteer Profiles, Project Selection, and Communication Portal) while adhering to the principles of Authorization Independence, Clarity of Intent, DBAC (Database-Based Access Control), QAPs (Rules are not Filters), and Invariants.  Authorization Independence is achieved through denormalization; specifically, the `projects` collection includes the `nonProfitId`, enabling rules to validate project ownership without resorting to `get()` calls. The `messages` subcollection of `chats` denormalizes both `senderId` and `recipientId`, allowing message access control based solely on the message document itself. Structural Segregation is implemented by storing volunteers' private data under `/users/{userId}/volunteerProfile` to ensure that only the volunteer can access their profile. Collaborative data (ProjectVolunteer assignments) is modeled using a dedicated collection `/projectVolunteers`. QAPs are supported through structural segregation, as list operations are inherently scoped to collections with uniform security requirements.\n\nThe key collections and subcollections are:\n\n*   `/nonProfits/{nonProfitId}`: Stores non-profit organization profiles.\n*   `/projects/{projectId}`: Stores project listings. Includes the `nonProfitId` field for authorization.\n*   `/users/{userId}/volunteerProfile`: Stores individual volunteer profiles.  Access is restricted to the authenticated user.\n*   `/projectVolunteers/{projectVolunteerId}`: Stores the many-to-many relationships between projects and volunteers.\n*   `/chats/{chatId}/messages/{messageId}`: Stores messages within a chat between a non-profit and a volunteer. Includes `senderId` and `recipientId` for authorization."
   }
 }
