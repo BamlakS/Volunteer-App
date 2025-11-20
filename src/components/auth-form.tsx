@@ -28,6 +28,8 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { Chrome } from 'lucide-react';
 import { DialogHeader, DialogTitle, DialogDescription } from './ui/dialog';
+import { useRouter } from 'next/navigation';
+
 
 const formSchema = z.object({
   email: z.string().email({ message: 'Please enter a valid email.' }),
@@ -43,6 +45,7 @@ type AuthFormProps = {
 export function AuthForm({ onAuthSuccess }: AuthFormProps) {
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
+  const router = useRouter();
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -50,6 +53,11 @@ export function AuthForm({ onAuthSuccess }: AuthFormProps) {
       password: '',
     },
   });
+
+  const handleSuccess = () => {
+    onAuthSuccess?.();
+    router.refresh();
+  };
 
   async function handleEmailAuth(
     values: z.infer<typeof formSchema>,
@@ -70,7 +78,7 @@ export function AuthForm({ onAuthSuccess }: AuthFormProps) {
           description: "You've successfully signed in.",
         });
       }
-      onAuthSuccess?.();
+      handleSuccess();
     } catch (error: any) {
       console.error(error);
       let description = 'There was a problem with your request.';
@@ -99,7 +107,7 @@ export function AuthForm({ onAuthSuccess }: AuthFormProps) {
         title: 'Signed In',
         description: "You've successfully signed in with Google.",
       });
-      onAuthSuccess?.();
+      handleSuccess();
     } catch (error: any) {
       console.error(error);
       toast({

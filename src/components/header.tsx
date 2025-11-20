@@ -62,7 +62,7 @@ export function Header() {
   
   const handleAuthSuccess = () => {
     setAuthDialogOpen(false);
-    router.refresh();
+    // This is handled by the auth form now
   };
 
   return (
