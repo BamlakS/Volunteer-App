@@ -49,6 +49,7 @@ export function Header() {
         description: "You've successfully signed out.",
       });
       router.push('/');
+      router.refresh();
     } catch (error) {
       console.error(error);
       toast({
