@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Heart, Clock, User } from 'lucide-react';
+import { Heart, Clock, User, Trash2 } from 'lucide-react';
 import type { Project } from '@/lib/types';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -9,10 +9,25 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
+import { useAuth, useFirestore } from '@/firebase';
+import { doc, deleteDoc } from 'firebase/firestore';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 
 export function ProjectCard({ project }: { project: Project }) {
   const [isFavorited, setIsFavorited] = useState(false);
   const { toast } = useToast();
+  const { user } = useAuth();
+  const firestore = useFirestore();
 
   const handleSelectProject = () => {
     toast({
@@ -30,6 +45,35 @@ export function ProjectCard({ project }: { project: Project }) {
     });
   }
 
+  const handleDeleteProject = async () => {
+    if (!user || user.uid !== project.creatorId) {
+        toast({
+            variant: 'destructive',
+            title: 'Unauthorized',
+            description: 'You are not authorized to delete this project.',
+        });
+        return;
+    }
+
+    try {
+        const projectRef = doc(firestore, 'projects', project.id);
+        await deleteDoc(projectRef);
+        toast({
+            title: 'Project Deleted',
+            description: `"${project.title}" has been successfully deleted.`,
+        });
+    } catch (error: any) {
+        console.error("Error deleting project:", error);
+        toast({
+            variant: 'destructive',
+            title: 'Error Deleting Project',
+            description: error.message || 'An unexpected error occurred.',
+        });
+    }
+  };
+
+  const isOwner = user?.uid === project.creatorId;
+
   return (
     <Card className="flex flex-col h-full overflow-hidden transition-transform transform hover:-translate-y-1 hover:shadow-xl duration-300 ease-in-out group">
       <CardHeader>
@@ -44,20 +88,51 @@ export function ProjectCard({ project }: { project: Project }) {
               <span>{project.creatorName}</span>
             </CardDescription>
           </div>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={toggleFavorite}
-            aria-label={isFavorited ? 'Remove from favorites' : 'Add to favorites'}
-            className="shrink-0 rounded-full h-10 w-10"
-          >
-            <Heart
-              className={cn(
-                'h-5 w-5 transition-all duration-300 group-hover:scale-110',
-                isFavorited ? 'fill-destructive text-destructive' : 'text-muted-foreground'
-              )}
-            />
-          </Button>
+           <div className="flex items-center shrink-0">
+            {isOwner && (
+                <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            aria-label="Delete project"
+                            className="rounded-full h-10 w-10 text-muted-foreground hover:text-destructive"
+                        >
+                            <Trash2 className="h-5 w-5" />
+                        </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                        <AlertDialogHeader>
+                            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                                This action cannot be undone. This will permanently delete the project
+                                "{project.title}".
+                            </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction onClick={handleDeleteProject} className={buttonVariants({ variant: "destructive" })}>
+                                Delete
+                            </AlertDialogAction>
+                        </AlertDialogFooter>
+                    </AlertDialogContent>
+                </AlertDialog>
+            )}
+            <Button
+                variant="ghost"
+                size="icon"
+                onClick={toggleFavorite}
+                aria-label={isFavorited ? 'Remove from favorites' : 'Add to favorites'}
+                className="rounded-full h-10 w-10"
+            >
+                <Heart
+                className={cn(
+                    'h-5 w-5 transition-all duration-300 group-hover:scale-110',
+                    isFavorited ? 'fill-destructive text-destructive' : 'text-muted-foreground'
+                )}
+                />
+            </Button>
+          </div>
         </div>
       </CardHeader>
       <CardContent className="flex-grow space-y-4">
@@ -85,5 +160,3 @@ export function ProjectCard({ project }: { project: Project }) {
     </Card>
   );
 }
-
-    
