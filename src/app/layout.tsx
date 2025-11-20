@@ -1,8 +1,9 @@
 import type { Metadata } from 'next';
 import './globals.css';
-import { Header } from '@/components/header';
 import { Toaster } from '@/components/ui/toaster';
 import { FirebaseClientProvider } from '@/firebase/client-provider';
+import { Sidebar, SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
+import { AppSidebar } from '@/components/app-sidebar';
 
 export const metadata: Metadata = {
   title: 'VolunteerConnect',
@@ -23,11 +24,15 @@ export default function RootLayout({
       </head>
       <body className="font-body antialiased bg-background text-foreground" suppressHydrationWarning={true}>
         <FirebaseClientProvider>
-          <div className="relative flex min-h-screen w-full flex-col">
-            <Header />
-            <main className="flex-1">{children}</main>
-          </div>
-          <Toaster />
+            <SidebarProvider>
+              <Sidebar>
+                <AppSidebar />
+              </Sidebar>
+              <SidebarInset>
+                <main>{children}</main>
+              </SidebarInset>
+              <Toaster />
+            </SidebarProvider>
         </FirebaseClientProvider>
       </body>
     </html>
