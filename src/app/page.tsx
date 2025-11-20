@@ -15,9 +15,8 @@ import { CreateProjectForm } from '@/components/create-project-form';
 import { Skeleton } from '@/components/ui/skeleton';
 import type { Project } from '@/lib/types';
 
-function ProjectList({ onOpenCreateDialog }: { onOpenCreateDialog: () => void }) {
+function ProjectList() {
   const firestore = useFirestore();
-  const { user } = useAuth();
   const projectsQuery = useMemoFirebase(() => collection(firestore, 'projects'), [firestore]);
   const { data: projects, isLoading } = useCollection<Project>(projectsQuery);
 
@@ -42,12 +41,6 @@ function ProjectList({ onOpenCreateDialog }: { onOpenCreateDialog: () => void })
         <div className="text-center py-16 bg-muted/50 rounded-lg flex flex-col items-center justify-center">
             <h3 className="text-xl font-semibold">No projects available right now.</h3>
             <p className="text-muted-foreground mt-2 mb-4">Be the first to create one!</p>
-            {user && (
-                 <Button onClick={onOpenCreateDialog}>
-                    <PlusCircle className="mr-2 h-4 w-4" />
-                    Create a Project
-                </Button>
-            )}
         </div>
     );
   }
@@ -88,7 +81,7 @@ export default function HomePage() {
             </DialogTrigger>
           )}
         </header>
-        <ProjectList onOpenCreateDialog={() => setDialogOpen(true)} />
+        <ProjectList />
         <DialogContent className="sm:max-w-[480px]">
             <CreateProjectForm onProjectCreated={() => setDialogOpen(false)} />
         </DialogContent>
