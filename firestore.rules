@@ -128,11 +128,11 @@ service cloud.firestore {
     match /projects/{projectId} {
       allow get, list: if true;
       allow create: if isCreator(request.resource.data);
-      allow update: if isExistingDoc() && (
-        // Creator can update their own project
+      allow update: if isSignedIn() && isExistingDoc() && (
+        // The creator can update their own project
         isCreator(resource.data) ||
-        // Any signed-in user can claim an 'Open' project
-        (isSignedIn() && resource.data.status == 'Open' && request.resource.data.status == 'In Progress' && request.resource.data.keys().hasOnly(['status']))
+        // Any signed-in user can update the status from 'Open' to 'In Progress' and nothing else
+        (resource.data.status == 'Open' && request.resource.data.status == 'In Progress' && hasOnlyKeys(['status']))
       );
       allow delete: if isExistingDoc() && isCreator(resource.data);
     }
@@ -187,3 +187,5 @@ service cloud.firestore {
     }
   }
 }
+
+    
