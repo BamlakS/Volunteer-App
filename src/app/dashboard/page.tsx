@@ -56,7 +56,7 @@ function UserProjectList() {
   if (!projects || projects.length === 0) {
     return (
       <div className="text-center py-10">
-        <p className="text-muted-foreground mb-4">You haven't created any projects yet. Get started by creating one!</p>
+        <p className="text-muted-foreground mb-4">You haven't created any projects yet. Create one to get started!</p>
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
             <Button size="lg">
@@ -71,7 +71,7 @@ function UserProjectList() {
                 Fill out the details below to list your project for volunteers.
               </DialogDescription>
             </DialogHeader>
-            <CreateProjectForm user={user} onProjectCreated={handleProjectCreated} />
+            {user && <CreateProjectForm user={user} onProjectCreated={handleProjectCreated} />}
           </DialogContent>
         </Dialog>
       </div>
