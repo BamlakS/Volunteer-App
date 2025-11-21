@@ -153,7 +153,7 @@ service cloud.firestore {
     }
 
     /**
-     * @description Secures messages within a chat.
+     * @description Secures messages within a a chat.
      * @path /chats/{chatId}/messages/{messageId}
      * @allow A chat participant listing messages in their chat: auth.uid is in parent chatDoc.participantIds, (list) /chats/chat_123/messages
      * @deny A user trying to send a message to a chat they are not in: (create) /chats/chat_456/messages/msg_abc
