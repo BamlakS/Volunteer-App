@@ -1,14 +1,13 @@
 'use client';
 
 import React from 'react';
-import { collection, query, where, getDocs, doc, getDoc, limit,getCountFromServer } from 'firebase/firestore';
-import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
+import { collection, query, where, getDocs, doc, getDoc, limit, getCountFromServer } from 'firebase/firestore';
+import { useFirestore } from '@/firebase';
 import { useAuth } from '@/firebase/auth/use-user';
-import { ProjectCard } from '@/components/project-card';
 import { Button } from '@/components/ui/button';
 import { ArrowRight, Briefcase, CheckCircle, PlusCircle, Users } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
-import type { Project, Volunteer } from '@/lib/types';
+import type { Project } from '@/lib/types';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 
@@ -22,6 +21,8 @@ import {
 import { Badge } from '@/components/ui/badge';
 import Image from 'next/image';
 import { volunteers } from '@/lib/data';
+import { errorEmitter } from '@/firebase/error-emitter';
+import { FirestorePermissionError } from '@/firebase/errors';
 
 function StatCard({ title, value, description, icon: Icon }: { title: string, value: string, description: string, icon: React.ElementType }) {
     return (
@@ -45,7 +46,7 @@ function ActiveProjects({ user }: { user: any }) {
 
   React.useEffect(() => {
     async function fetchVolunteerProjects() {
-      if (!user) {
+      if (!user || !firestore) {
         setIsLoading(false);
         return;
       }
@@ -71,8 +72,13 @@ function ActiveProjects({ user }: { user: any }) {
         } else {
           setProjects([]);
         }
-      } catch (error) {
+      } catch (error: any) {
         console.error("Error fetching volunteer projects:", error);
+        const permissionError = new FirestorePermissionError({
+            path: `projectVolunteers or projects`,
+            operation: 'list',
+          });
+        errorEmitter.emit('permission-error', permissionError);
       } finally {
         setIsLoading(false);
       }
@@ -152,7 +158,7 @@ function NewOpportunities({ user }: { user: any }) {
   
     React.useEffect(() => {
       async function fetchOtherProjects() {
-        if (!user) {
+        if (!user || !firestore) {
           setIsLoading(false);
           return;
         }
@@ -186,13 +192,13 @@ function NewOpportunities({ user }: { user: any }) {
           
           setProjects(availableProjects);
 
-        } catch (error) {
+        } catch (error: any) {
           console.error("Error fetching other projects:", error);
-          // Fallback in case of query error (e.g. empty excludedIds with not-in)
-          const fallbackQuery = query(collection(firestore, 'projects'), limit(5));
-          const fallbackSnapshot = await getDocs(fallbackQuery);
-          const fallbackProjects = fallbackSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Project));
-          setProjects(fallbackProjects.filter(p => p.creatorId !== user.uid).slice(0,4));
+          const permissionError = new FirestorePermissionError({
+            path: 'projects or projectVolunteers',
+            operation: 'list'
+          });
+          errorEmitter.emit('permission-error', permissionError);
 
         } finally {
           setIsLoading(false);
@@ -273,8 +279,16 @@ export default function DashboardPage() {
      const fetchTotalProjects = async () => {
         if (!firestore) return;
         const projectsCol = collection(firestore, 'projects');
-        const snapshot = await getCountFromServer(projectsCol);
-        setTotalProjects(snapshot.data().count);
+        try {
+            const snapshot = await getCountFromServer(projectsCol);
+            setTotalProjects(snapshot.data().count);
+        } catch(e: any) {
+            const permissionError = new FirestorePermissionError({
+                path: 'projects',
+                operation: 'list',
+              });
+            errorEmitter.emit('permission-error', permissionError);
+        }
      }
      if (firestore) fetchTotalProjects();
 
