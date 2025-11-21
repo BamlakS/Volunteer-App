@@ -23,8 +23,6 @@ import { collection } from 'firebase/firestore';
 import { SKILLS } from '@/lib/skills';
 import { Badge } from './ui/badge';
 import type { User } from 'firebase/auth';
-import { FirestorePermissionError } from '@/firebase/errors';
-import { errorEmitter } from '@/firebase/error-emitter';
 
 const projectSchema = z.object({
   title: z.string().min(1, { message: 'Title is required.' }),
@@ -66,7 +64,9 @@ export function CreateProjectForm({ user, onProjectCreated }: CreateProjectFormP
     
     const projectsCol = collection(firestore, 'projects');
     const newProject = {
-        ...values,
+        title: values.title,
+        description: values.description,
+        estimatedTimeCommitment: values.timeCommitment,
         requiredSkills: values.skills || [],
         creatorId: user.uid,
         creatorName: user.displayName || 'Anonymous',
@@ -74,13 +74,8 @@ export function CreateProjectForm({ user, onProjectCreated }: CreateProjectFormP
         createdAt: new Date(),
     };
     
-    // The skills field is being renamed to requiredSkills to match the backend.json definition.
-    // The original skills field is removed from the object to avoid having both.
-    // @ts-ignore
-    delete newProject.skills;
-
     try {
-        const docRef = await addDocumentNonBlocking(projectsCol, newProject);
+        await addDocumentNonBlocking(projectsCol, newProject);
         
         toast({
             title: 'Project Created!',
@@ -90,7 +85,14 @@ export function CreateProjectForm({ user, onProjectCreated }: CreateProjectFormP
         onProjectCreated?.();
         
     } catch (error: any) {
-        // This is the old error handling. We've replaced it with the non-blocking .catch()
+        // The non-blocking function already emits the contextual error.
+        // We can show a generic toast here if we want, but the main debugging
+        // error will appear in the dev overlay.
+        toast({
+            variant: 'destructive',
+            title: 'Creation Failed',
+            description: 'Could not create the project due to a permission issue.',
+          });
     } finally {
       setLoading(false);
     }
