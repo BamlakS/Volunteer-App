@@ -132,7 +132,7 @@ service cloud.firestore {
         // Allow the creator to update their own project, ensuring creatorId remains immutable.
         (isCreator(resource.data) && request.resource.data.creatorId == resource.data.creatorId) ||
         // Allow any authenticated user to update ONLY the status to 'In Progress' if it's currently 'Open'.
-        (isSignedIn() && resource.data.status == 'Open' && request.resource.data.size() == 1 && request.resource.data.status == 'In Progress')
+        (isSignedIn() && resource.data.status == 'Open' && request.resource.data.status == 'In Progress' && request.resource.data.keys().hasOnly(['status']))
       );
       allow delete: if isExistingDoc() && isCreator(resource.data);
     }
@@ -151,7 +151,7 @@ service cloud.firestore {
      */
     match /projectVolunteers/{projectVolunteerId} {
       allow get: if isSignedIn() && (isOwner(resource.data.volunteerId) || isCreator(get(/databases/$(database)/documents/projects/$(resource.data.projectId)).data));
-      allow list: if isSignedIn() && request.query.get("where")[0][0] == "volunteerId" && request.query.get("where")[0][2] == request.auth.uid;
+      allow list: if isSignedIn() && request.query.where[0][2] == request.auth.uid;
       allow create: if isSignedIn() && request.resource.data.volunteerId == request.auth.uid;
       allow update: if false; // Applications are immutable; they can be created or deleted.
       allow delete: if isExistingDoc() && (isOwner(resource.data.volunteerId) || isCreator(get(/databases/$(database)/documents/projects/$(resource.data.projectId)).data));
