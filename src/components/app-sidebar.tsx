@@ -43,8 +43,8 @@ import { Input } from './ui/input';
 import { CreateProjectForm } from './create-project-form';
 
 const navLinks = [
-  { href: '/', label: 'Projects', icon: FolderKanban },
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, auth: true },
+  { href: '/', label: 'Projects', icon: FolderKanban },
   { href: '/volunteers', label: 'Volunteers', icon: Users },
   { href: '/messages', label: 'Messages', icon: MessageSquare, auth: true },
 ];
@@ -106,11 +106,11 @@ function AuthState() {
             </div>
           </DropdownMenuLabel>
           <DropdownMenuSeparator />
-          <DropdownMenuItem asChild>
-            <Link href="/dashboard">Dashboard</Link>
+          <DropdownMenuItem>
+            Profile
           </DropdownMenuItem>
-          <DropdownMenuItem asChild>
-            <Link href="/create-project">Create Project</Link>
+           <DropdownMenuItem>
+            Settings
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem onClick={handleSignOut}>

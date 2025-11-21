@@ -5,10 +5,11 @@ export type Project = {
   title: string;
   description: string;
   requiredSkills: Skill[];
-  timeCommitment?: string;
+  estimatedTimeCommitment?: string;
   creatorId: string;
   creatorName: string;
   creatorAvatarUrl?: string;
+  status?: 'Open' | 'In Progress' | 'Completed';
 };
 
 export type Volunteer = {

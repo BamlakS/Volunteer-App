@@ -1,173 +1,151 @@
 'use client';
 
 import React from 'react';
-import { collection, query, where, getDocs, doc, getDoc, limit } from 'firebase/firestore';
+import { collection, query, where, getDocs, doc, getDoc, limit,getCountFromServer } from 'firebase/firestore';
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { useAuth } from '@/firebase/auth/use-user';
 import { ProjectCard } from '@/components/project-card';
 import { Button } from '@/components/ui/button';
-import { PlusCircle } from 'lucide-react';
+import { ArrowRight, Briefcase, CheckCircle, PlusCircle, Users } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
-import type { Project } from '@/lib/types';
+import type { Project, Volunteer } from '@/lib/types';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
+
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogTrigger,
-} from '@/components/ui/dialog';
-import { CreateProjectForm } from '@/components/create-project-form';
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import Image from 'next/image';
+import { volunteers } from '@/lib/data';
 
-function UserCreatedProjectsList({ user }: { user: any }) {
+function StatCard({ title, value, description, icon: Icon }: { title: string, value: string, description: string, icon: React.ElementType }) {
+    return (
+        <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">{title}</CardTitle>
+                <Icon className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+                <div className="text-2xl font-bold">{value}</div>
+                <p className="text-xs text-muted-foreground">{description}</p>
+            </CardContent>
+        </Card>
+    );
+}
+
+function ActiveProjects({ user }: { user: any }) {
   const firestore = useFirestore();
-  const [isDialogOpen, setIsDialogOpen] = React.useState(false);
+  const [projects, setProjects] = React.useState<Project[]>([]);
+  const [isLoading, setIsLoading] = React.useState(true);
 
-  const projectsQuery = useMemoFirebase(() => {
-    if (!user) return null;
-    return query(collection(firestore, 'projects'), where('creatorId', '==', user.uid));
-  }, [firestore, user]);
+  React.useEffect(() => {
+    async function fetchVolunteerProjects() {
+      if (!user) {
+        setIsLoading(false);
+        return;
+      }
+      try {
+        setIsLoading(true);
+        const projectVolunteersQuery = query(
+          collection(firestore, 'projectVolunteers'),
+          where('volunteerId', '==', user.uid)
+        );
+        const querySnapshot = await getDocs(projectVolunteersQuery);
+        const projectIds = querySnapshot.docs.map(d => d.data().projectId);
 
-  const { data: projects, isLoading: projectsLoading } = useCollection<Project>(projectsQuery);
+        if (projectIds.length > 0) {
+          const projectDocs = await Promise.all(
+            projectIds.map(id => getDoc(doc(firestore, 'projects', id)))
+          );
 
-  const handleProjectCreated = () => {
-    setIsDialogOpen(false);
-  };
+          const fetchedProjects = projectDocs
+            .filter(docSnap => docSnap.exists())
+            .map(docSnap => ({ id: docSnap.id, ...docSnap.data(), status: 'In Progress' } as Project & { status: string }));
 
-  if (projectsLoading) {
-    return (
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-        {Array.from({ length: 3 }).map((_, i) => (
-          <div key={i} className="flex flex-col space-y-3">
-            <Skeleton className="h-[200px] w-full rounded-xl" />
-            <div className="space-y-2">
-              <Skeleton className="h-4 w-[250px]" />
-              <Skeleton className="h-4 w-[200px]" />
-            </div>
-          </div>
-        ))}
-      </div>
-    );
-  }
+          setProjects(fetchedProjects);
+        } else {
+          setProjects([]);
+        }
+      } catch (error) {
+        console.error("Error fetching volunteer projects:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    if (user) fetchVolunteerProjects();
+    else setIsLoading(false);
+  }, [user, firestore]);
 
-  if (!projects || projects.length === 0) {
-    return (
-      <div className="text-center py-10 border-2 border-dashed rounded-lg">
-        <p className="text-muted-foreground mb-4">You haven't created any projects yet. Create one to get started!</p>
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogTrigger asChild>
-            <Button size="lg">
-                <PlusCircle className="mr-2 h-5 w-5" />
-                Create a Project
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-[600px]">
-            <DialogHeader>
-              <DialogTitle className="text-2xl font-headline">Create a New Project</DialogTitle>
-              <DialogDescription>
-                Fill out the details below to list your project for volunteers.
-              </DialogDescription>
-            </DialogHeader>
-            {user && <CreateProjectForm user={user} onProjectCreated={handleProjectCreated} />}
-          </DialogContent>
-        </Dialog>
-      </div>
-    );
+  if (isLoading) {
+      return (
+          <Card>
+              <CardHeader>
+                  <CardTitle>Active Projects</CardTitle>
+                  <CardDescription>A view of projects that are currently in progress.</CardDescription>
+              </CardHeader>
+              <CardContent>
+                  <div className="space-y-4">
+                      {[...Array(3)].map((_, i) => (
+                          <div key={i} className="flex justify-between items-center">
+                              <div className="space-y-1">
+                                  <Skeleton className="h-4 w-48" />
+                                  <Skeleton className="h-3 w-32" />
+                              </div>
+                              <Skeleton className="h-6 w-24 rounded-full" />
+                              <Skeleton className="h-4 w-28" />
+                          </div>
+                      ))}
+                  </div>
+              </CardContent>
+          </Card>
+      );
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-      {projects.map((project) => (
-        <ProjectCard key={project.id} project={project} user={user} />
-      ))}
-    </div>
+      <Card className="h-full">
+          <CardHeader>
+              <CardTitle>Active Projects</CardTitle>
+              <CardDescription>A view of projects that are currently in progress.</CardDescription>
+          </CardHeader>
+          <CardContent>
+              {projects.length === 0 ? (
+                   <div className="text-center py-10 border-2 border-dashed rounded-lg">
+                      <p className="text-muted-foreground">You haven't selected any projects yet.</p>
+                       <Button variant="link" asChild><Link href="/">Browse projects</Link></Button>
+                  </div>
+              ) : (
+                  <div className="space-y-6">
+                      <div className="grid grid-cols-[2fr,1fr,1fr] items-center gap-4 text-xs text-muted-foreground px-4 font-medium">
+                          <span>Project</span>
+                          <span className="text-center">Status</span>
+                          <span className="text-right">Commitment</span>
+                      </div>
+                       {projects.map(project => (
+                          <div key={project.id} className="grid grid-cols-[2fr,1fr,1fr] items-center gap-4 border-t pt-4">
+                              <div>
+                                  <p className="font-semibold">{project.title}</p>
+                                  <p className="text-sm text-muted-foreground">{project.creatorName}</p>
+                              </div>
+                              <div className="text-center">
+                                  <Badge variant="secondary">{project.status || 'In Progress'}</Badge>
+                              </div>
+                              <p className="text-sm text-muted-foreground text-right">{project.estimatedTimeCommitment}</p>
+                          </div>
+                       ))}
+                  </div>
+              )}
+          </CardContent>
+      </Card>
   );
 }
 
-function UserVolunteerProjectsList({ user }: { user: any }) {
-    const firestore = useFirestore();
-    const [projects, setProjects] = React.useState<Project[]>([]);
-    const [isLoading, setIsLoading] = React.useState(true);
-  
-    React.useEffect(() => {
-      async function fetchVolunteerProjects() {
-        if (!user) {
-          setIsLoading(false);
-          return;
-        }
-  
-        try {
-          setIsLoading(true);
-          const projectVolunteersQuery = query(
-            collection(firestore, 'projectVolunteers'),
-            where('volunteerId', '==', user.uid)
-          );
-          const querySnapshot = await getDocs(projectVolunteersQuery);
-          const projectIds = querySnapshot.docs.map(d => d.data().projectId);
-          
-          if (projectIds.length > 0) {
-            const projectDocs = await Promise.all(
-              projectIds.map(id => getDoc(doc(firestore, 'projects', id)))
-            );
-            
-            const fetchedProjects = projectDocs
-              .filter(docSnap => docSnap.exists())
-              .map(docSnap => ({ id: docSnap.id, ...docSnap.data() } as Project));
-            
-            setProjects(fetchedProjects);
-          } else {
-            setProjects([]);
-          }
-        } catch (error) {
-          console.error("Error fetching volunteer projects:", error);
-        } finally {
-          setIsLoading(false);
-        }
-      }
-  
-      if (user) {
-        fetchVolunteerProjects();
-      } else {
-        setIsLoading(false);
-      }
-    }, [user, firestore]);
-  
-    if (isLoading) {
-      return (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {Array.from({ length: 3 }).map((_, i) => (
-            <div key={i} className="flex flex-col space-y-3">
-              <Skeleton className="h-[200px] w-full rounded-xl" />
-              <div className="space-y-2">
-                <Skeleton className="h-4 w-[250px]" />
-                <Skeleton className="h-4 w-[200px]" />
-              </div>
-            </div>
-          ))}
-        </div>
-      );
-    }
-  
-    if (projects.length === 0) {
-      return (
-        <div className="text-center py-10 border-2 border-dashed rounded-lg">
-          <p className="text-muted-foreground">You haven't selected any projects to volunteer for yet.</p>
-          <p className="text-sm text-muted-foreground mt-1">Browse projects on the homepage to get started.</p>
-        </div>
-      );
-    }
-  
-    return (
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-        {projects.map((project) => (
-          <ProjectCard key={project.id} project={project} user={user} />
-        ))}
-      </div>
-    );
-  }
 
-  function OtherProjectsList({ user }: { user: any }) {
+function NewOpportunities({ user }: { user: any }) {
     const firestore = useFirestore();
     const [projects, setProjects] = React.useState<Project[]>([]);
     const [isLoading, setIsLoading] = React.useState(true);
@@ -175,106 +153,141 @@ function UserVolunteerProjectsList({ user }: { user: any }) {
     React.useEffect(() => {
       async function fetchOtherProjects() {
         if (!user) {
-            setIsLoading(false);
-            return;
-        };
-
+          setIsLoading(false);
+          return;
+        }
         try {
           setIsLoading(true);
-          // Fetch IDs of projects user has created or volunteered for
           const createdProjectsQuery = query(collection(firestore, 'projects'), where('creatorId', '==', user.uid));
           const volunteerProjectsQuery = query(collection(firestore, 'projectVolunteers'), where('volunteerId', '==', user.uid));
   
-          const [createdSnapshot, volunteerSnapshot] = await Promise.all([
-            getDocs(createdProjectsQuery),
-            getDocs(volunteerProjectsQuery)
-          ]);
+          const [createdSnapshot, volunteerSnapshot] = await Promise.all([getDocs(createdProjectsQuery), getDocs(volunteerProjectsQuery)]);
   
           const createdIds = createdSnapshot.docs.map(d => d.id);
           const volunteerProjectIds = volunteerSnapshot.docs.map(d => d.data().projectId);
           const excludedIds = [...new Set([...createdIds, ...volunteerProjectIds])];
-  
-          // Fetch all projects and filter out excluded ones on the client
-          const allProjectsQuery = query(collection(firestore, 'projects'));
-          const allProjectsSnapshot = await getDocs(allProjectsQuery);
           
-          const availableProjects = allProjectsSnapshot.docs
-            .map(doc => ({ id: doc.id, ...doc.data() } as Project))
-            .filter(p => !excludedIds.includes(p.id));
+          let allProjectsQuery;
+          if (excludedIds.length > 0) {
+            allProjectsQuery = query(
+              collection(firestore, 'projects'),
+              where('__name__', 'not-in', excludedIds.slice(0,10)), // Firestore 'not-in' has a limit of 10
+              limit(2)
+            );
+          } else {
+            allProjectsQuery = query(collection(firestore, 'projects'), limit(2));
+          }
 
+          const allProjectsSnapshot = await getDocs(allProjectsQuery);
+          const availableProjects = allProjectsSnapshot.docs
+            .map(doc => ({ id: doc.id, ...doc.data() } as Project));
+          
           setProjects(availableProjects);
 
         } catch (error) {
           console.error("Error fetching other projects:", error);
-          setProjects([]);
+          const fallbackQuery = query(collection(firestore, 'projects'), limit(5));
+          const fallbackSnapshot = await getDocs(fallbackQuery);
+          const fallbackProjects = fallbackSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Project));
+          setProjects(fallbackProjects.filter(p => p.creatorId !== user.uid).slice(0,2));
+
         } finally {
           setIsLoading(false);
         }
       }
-  
-      fetchOtherProjects();
+      if (user) fetchOtherProjects();
+      else setIsLoading(false);
     }, [user, firestore]);
   
     if (isLoading) {
-      return (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {Array.from({ length: 3 }).map((_, i) => (
-            <div key={i} className="flex flex-col space-y-3">
-              <Skeleton className="h-[250px] w-full rounded-xl" />
-              <div className="space-y-2">
-                <Skeleton className="h-4 w-[250px]" />
-                <Skeleton className="h-4 w-[200px]" />
-              </div>
-            </div>
-          ))}
-        </div>
-      );
+        return (
+            <Card>
+                <CardHeader>
+                    <CardTitle>New Opportunities</CardTitle>
+                    <CardDescription>Check out the latest projects seeking volunteers.</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                    {[...Array(2)].map((_, i) => (
+                         <div key={i} className="flex items-center gap-4">
+                            <Skeleton className="h-16 w-16 rounded-lg" />
+                            <div className="flex-grow space-y-2">
+                                <Skeleton className="h-4 w-3/4" />
+                                <Skeleton className="h-3 w-1/2" />
+                            </div>
+                            <Skeleton className="h-8 w-8 rounded-md" />
+                         </div>
+                    ))}
+                </CardContent>
+            </Card>
+        )
     }
-  
-    if (projects.length === 0) {
-      return (
-        <div className="text-center py-10 border-2 border-dashed rounded-lg">
-          <p className="text-muted-foreground">No new projects from other users are available right now.</p>
-        </div>
-      );
-    }
-  
-    return (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {projects.map((project) => (
-                <ProjectCard key={project.id} project={project} user={user} />
-            ))}
-        </div>
-    );
-  }
 
+    return (
+        <Card className="h-full">
+            <CardHeader>
+                <CardTitle>New Opportunities</CardTitle>
+                <CardDescription>Check out the latest projects seeking volunteers.</CardDescription>
+            </CardHeader>
+            <CardContent>
+                {projects.length === 0 ? (
+                    <div className="text-center py-10">
+                        <p className="text-muted-foreground">No new opportunities right now.</p>
+                    </div>
+                ) : (
+                    <div className="space-y-4">
+                        {projects.map(project => (
+                            <div key={project.id} className="flex items-center gap-4">
+                                <Image src={`https://picsum.photos/seed/${project.id}/150/150`} alt={project.title} width={64} height={64} className="rounded-lg object-cover" />
+                                <div className="flex-grow">
+                                    <p className="font-semibold">{project.title}</p>
+                                    <p className="text-sm text-muted-foreground">{project.creatorName}</p>
+                                </div>
+                                <Button asChild variant="outline" size="icon">
+                                    <Link href={`/`}>
+                                        <ArrowRight className="h-4 w-4" />
+                                    </Link>
+                                </Button>
+                            </div>
+                        ))}
+                    </div>
+                )}
+            </CardContent>
+        </Card>
+    )
+}
 
 export default function DashboardPage() {
   const { user, loading } = useAuth();
   const router = useRouter();
+  const firestore = useFirestore();
+
+  const [totalProjects, setTotalProjects] = React.useState(0);
 
   React.useEffect(() => {
     if (!loading && !user) {
       router.push('/');
     }
-  }, [user, loading, router]);
+     const fetchTotalProjects = async () => {
+        const projectsCol = collection(firestore, 'projects');
+        const snapshot = await getCountFromServer(projectsCol);
+        setTotalProjects(snapshot.data().count);
+     }
+     fetchTotalProjects();
+
+  }, [user, loading, router, firestore]);
   
   if (loading || !user) {
     return (
         <div className="container mx-auto px-4 py-8">
-            <div className="space-y-4">
-                <Skeleton className="h-10 w-1/4" />
-                <Skeleton className="h-6 w-1/2" />
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 pt-8">
-                    {Array.from({ length: 3 }).map((_, i) => (
-                    <div key={i} className="flex flex-col space-y-3">
-                        <Skeleton className="h-[200px] w-full rounded-xl" />
-                        <div className="space-y-2">
-                        <Skeleton className="h-4 w-[250px]" />
-                        <Skeleton className="h-4 w-[200px]" />
-                        </div>
-                    </div>
-                    ))}
+            <div className="space-y-8">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <Skeleton className="h-28 w-full" />
+                    <Skeleton className="h-28 w-full" />
+                    <Skeleton className="h-28 w-full" />
+                </div>
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <Skeleton className="h-96 lg:col-span-2" />
+                    <Skeleton className="h-96" />
                 </div>
             </div>
         </div>
@@ -283,31 +296,22 @@ export default function DashboardPage() {
 
   return (
     <div className="container mx-auto px-4 py-8">
-        <header className="mb-8">
-           <div className="text-left">
-            <h1 className="text-4xl md:text-5xl font-headline font-bold mb-2">
-              My Dashboard
-            </h1>
-            <p className="text-lg text-muted-foreground max-w-2xl">
-              Manage your created projects and view your contributions.
-            </p>
-          </div>
-        </header>
+        <div className="space-y-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <StatCard title="Total Projects" value={totalProjects.toString()} description="All projects on the platform" icon={Briefcase} />
+                <StatCard title="Volunteers" value={volunteers.length.toString()} description="Ready to help" icon={Users} />
+                <StatCard title="Projects Completed" value="+1" description="Successfully delivered" icon={CheckCircle} />
+            </div>
 
-        <section className="mt-12">
-            <h2 className="text-2xl font-bold font-headline mb-6">Discover Other Projects</h2>
-            <OtherProjectsList user={user} />
-        </section>
-
-        <section className="mt-12">
-          <h2 className="text-2xl font-bold font-headline mb-6">My Volunteer Projects</h2>
-          <UserVolunteerProjectsList user={user}/>
-        </section>
-
-         <section className="mt-12">
-          <h2 className="text-2xl font-bold font-headline mb-6">Created By Me</h2>
-          <UserCreatedProjectsList user={user} />
-        </section>
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <div className="lg:col-span-2">
+                    <ActiveProjects user={user} />
+                </div>
+                <div>
+                    <NewOpportunities user={user} />
+                </div>
+            </div>
+        </div>
     </div>
   );
 }
