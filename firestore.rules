@@ -131,8 +131,8 @@ service cloud.firestore {
       allow update: if isSignedIn() && isExistingDoc() && (
         // The creator can update their own project, but not change the creatorId
         (isCreator(resource.data) && request.resource.data.creatorId == resource.data.creatorId) ||
-        // Any signed-in user can update the status from 'Open' to 'In Progress' and nothing else
-        (resource.data.status == 'Open' && request.resource.data.status == 'In Progress' && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status']))
+        // Any signed-in user can claim an open project by updating its status and nothing else.
+        (resource.data.status == 'Open' && request.resource.data.status == 'In Progress' && request.resource.data.keys().hasOnly(['status']))
       );
       allow delete: if isExistingDoc() && isCreator(resource.data);
     }
