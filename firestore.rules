@@ -129,10 +129,10 @@ service cloud.firestore {
       allow get, list: if true;
       allow create: if isCreator(request.resource.data);
       allow update: if isSignedIn() && isExistingDoc() && (
-        // The creator can update their own project
-        isCreator(resource.data) ||
+        // The creator can update their own project, but not change the creatorId
+        (isCreator(resource.data) && request.resource.data.creatorId == resource.data.creatorId) ||
         // Any signed-in user can update the status from 'Open' to 'In Progress' and nothing else
-        (resource.data.status == 'Open' && request.resource.data.status == 'In Progress' && hasOnlyKeys(['status']))
+        (resource.data.status == 'Open' && request.resource.data.status == 'In Progress' && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status']))
       );
       allow delete: if isExistingDoc() && isCreator(resource.data);
     }
@@ -187,5 +187,3 @@ service cloud.firestore {
     }
   }
 }
-
-    
