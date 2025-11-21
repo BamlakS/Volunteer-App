@@ -165,11 +165,12 @@ function NewOpportunities({ user }: { user: any }) {
           setIsLoading(true);
 
           // Fetch the latest 10 projects, excluding those created by the current user.
+          // Firestore requires an orderBy clause on the same field as a '!=' or 'not-in' filter.
           const projectsQuery = query(
             collection(firestore, 'projects'),
             where('creatorId', '!=', user.uid),
-            orderBy('creatorId'), // Firestore requires an orderBy when using a '!=' filter.
-            orderBy('createdAt', 'desc'),
+            orderBy('creatorId'), // First order by the field in the inequality
+            orderBy('createdAt', 'desc'), // Then order by creation date
             limit(10)
           );
           
