@@ -166,13 +166,13 @@ function UserVolunteerProjectsList() {
     );
   }
 
-  function FeaturedProject({ user }: { user: any }) {
+  function FeaturedProjectsList({ user }: { user: any }) {
     const firestore = useFirestore();
-    const [project, setProject] = React.useState<Project | null>(null);
+    const [projects, setProjects] = React.useState<Project[]>([]);
     const [isLoading, setIsLoading] = React.useState(true);
   
     React.useEffect(() => {
-      async function fetchRandomProject() {
+      async function fetchRandomProjects() {
         if (!user) {
             setIsLoading(false);
             return;
@@ -201,36 +201,38 @@ function UserVolunteerProjectsList() {
             .map(doc => ({ id: doc.id, ...doc.data() } as Project))
             .filter(p => !excludedIds.includes(p.id));
 
-          if (availableProjects.length > 0) {
-            const randomIndex = Math.floor(Math.random() * availableProjects.length);
-            setProject(availableProjects[randomIndex]);
-          } else {
-            setProject(null);
-          }
+          // Shuffle and take the first 3
+          const featured = availableProjects.sort(() => 0.5 - Math.random()).slice(0, 3);
+          setProjects(featured);
+
         } catch (error) {
-          console.error("Error fetching a random project:", error);
-          setProject(null);
+          console.error("Error fetching random projects:", error);
+          setProjects([]);
         } finally {
           setIsLoading(false);
         }
       }
   
-      fetchRandomProject();
+      fetchRandomProjects();
     }, [user, firestore]);
   
     if (isLoading) {
       return (
-        <div className="flex flex-col space-y-3">
-          <Skeleton className="h-[200px] w-full rounded-xl" />
-          <div className="space-y-2">
-            <Skeleton className="h-4 w-[250px]" />
-            <Skeleton className="h-4 w-[200px]" />
-          </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <div key={i} className="flex flex-col space-y-3">
+              <Skeleton className="h-[250px] w-full rounded-xl" />
+              <div className="space-y-2">
+                <Skeleton className="h-4 w-[250px]" />
+                <Skeleton className="h-4 w-[200px]" />
+              </div>
+            </div>
+          ))}
         </div>
       );
     }
   
-    if (!project) {
+    if (projects.length === 0) {
       return (
         <div className="text-center py-10 border-2 border-dashed rounded-lg">
           <p className="text-muted-foreground">No new projects available to feature right now.</p>
@@ -238,7 +240,13 @@ function UserVolunteerProjectsList() {
       );
     }
   
-    return <ProjectCard project={project} user={user} />;
+    return (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {projects.map((project) => (
+                <ProjectCard key={project.id} project={project} user={user} />
+            ))}
+        </div>
+    );
   }
 
 
@@ -288,10 +296,8 @@ export default function DashboardPage() {
         </header>
 
         <section className="mt-12">
-            <h2 className="text-2xl font-bold font-headline mb-6">Featured Project</h2>
-            <div className="max-w-md">
-                <FeaturedProject user={user} />
-            </div>
+            <h2 className="text-2xl font-bold font-headline mb-6">Featured Projects</h2>
+            <FeaturedProjectsList user={user} />
         </section>
 
         <section className="mt-12">
