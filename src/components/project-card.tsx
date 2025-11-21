@@ -117,6 +117,23 @@ export function ProjectCard({ project, user }: ProjectCardProps) {
 
   const isOwner = user?.uid === project.creatorId;
 
+  const getButtonState = () => {
+    if (isOwner) {
+      return { disabled: true, text: "This is your project" };
+    }
+    switch (project.status) {
+      case 'In Progress':
+        return { disabled: true, text: 'Project In Progress' };
+      case 'Completed':
+        return { disabled: true, text: 'Project Completed' };
+      case 'Open':
+      default:
+        return { disabled: false, text: 'Select Project' };
+    }
+  };
+
+  const { disabled, text } = getButtonState();
+
   return (
     <Card className="flex flex-col h-full overflow-hidden transition-transform transform hover:-translate-y-1 hover:shadow-xl duration-300 ease-in-out group">
       <CardHeader>
@@ -198,8 +215,8 @@ export function ProjectCard({ project, user }: ProjectCardProps) {
         )}
       </CardContent>
       <CardFooter>
-        <Button className="w-full" onClick={handleSelectProject} disabled={isOwner || project.status !== 'Open'}>
-          {isOwner ? "This is your project" : project.status === 'In Progress' ? 'Project In Progress' : project.status === 'Completed' ? 'Project Completed' : "Select Project"}
+        <Button className="w-full" onClick={handleSelectProject} disabled={disabled}>
+          {text}
         </Button>
       </CardFooter>
     </Card>
