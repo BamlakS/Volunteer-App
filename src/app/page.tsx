@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { collection, query } from 'firebase/firestore';
+import { collection, query, where } from 'firebase/firestore';
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { useAuth } from '@/firebase/auth/use-user';
 import { ProjectCard } from '@/components/project-card';
@@ -22,9 +22,16 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
-function ProjectList() {
+function ProjectList({ status }: { status?: 'All' | 'Open' | 'In Progress' | 'Completed' }) {
   const firestore = useFirestore();
-  const projectsQuery = useMemoFirebase(() => query(collection(firestore, 'projects')), [firestore]);
+  const projectsQuery = useMemoFirebase(() => {
+    if (!firestore) return null;
+    if (status && status !== 'All') {
+      return query(collection(firestore, 'projects'), where('status', '==', status));
+    }
+    return query(collection(firestore, 'projects'));
+  }, [firestore, status]);
+
   const { data: projects, isLoading } = useCollection<Project>(projectsQuery);
   const { user } = useAuth();
   const router = useRouter();
@@ -55,7 +62,7 @@ function ProjectList() {
     return (
         <div className="text-center py-20 flex flex-col items-center justify-center border-2 border-dashed rounded-lg mt-8">
              <h3 className="text-xl font-semibold mb-2">No Projects Found</h3>
-             <p className="text-muted-foreground mb-4">Be the first one to create a project!</p>
+             <p className="text-muted-foreground mb-4">{status && status !== 'All' ? `There are no projects with the status "${status}".` : "Be the first one to create a project!"}</p>
              {user && (
                 <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
                   <DialogTrigger asChild>
@@ -127,11 +134,17 @@ export default function HomePage() {
             <TabsTrigger value="completed" className="data-[state=active]:shadow-none data-[state=active]:border-b-2 border-primary rounded-none">Completed</TabsTrigger>
           </TabsList>
           <TabsContent value="all" className="mt-6">
-            <ProjectList />
+            <ProjectList status="All" />
           </TabsContent>
-          <TabsContent value="open" className="mt-6 text-center text-muted-foreground py-16">Filtering by 'Open' is not yet implemented.</TabsContent>
-          <TabsContent value="in-progress" className="mt-6 text-center text-muted-foreground py-16">Filtering by 'In Progress' is not yet implemented.</TabsContent>
-          <TabsContent value="completed" className="mt-6 text-center text-muted-foreground py-16">Filtering by 'Completed' is not yet implemented.</TabsContent>
+          <TabsContent value="open" className="mt-6">
+            <ProjectList status="Open" />
+          </TabsContent>
+          <TabsContent value="in-progress" className="mt-6">
+            <ProjectList status="In Progress" />
+          </TabsContent>
+          <TabsContent value="completed" className="mt-6">
+            <ProjectList status="Completed" />
+          </TabsContent>
         </Tabs>
       </header>
     </div>

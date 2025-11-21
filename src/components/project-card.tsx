@@ -22,7 +22,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
-import { addDocumentNonBlocking } from '@/firebase/non-blocking-updates';
+import { addDocumentNonBlocking, updateDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { deleteDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import type { User as FirebaseUser } from 'firebase/auth';
 
@@ -36,7 +36,7 @@ export function ProjectCard({ project, user }: ProjectCardProps) {
   const { toast } = useToast();
   const firestore = useFirestore();
 
-  const handleSelectProject = () => {
+  const handleSelectProject = async () => {
     if (!user) {
       toast({
         variant: 'destructive',
@@ -53,22 +53,30 @@ export function ProjectCard({ project, user }: ProjectCardProps) {
       status: 'applied', // You can add a status
       appliedAt: new Date(),
     };
+    
+    const projectRef = doc(firestore, 'projects', project.id);
 
-    addDocumentNonBlocking(projectVolunteersCol, newApplication).then(() => {
-        toast({
-          title: "Project Selected!",
-          description: `You have applied to "${project.title}". You can track it on your dashboard.`,
-        });
-    }).catch(() => {
-      // The non-blocking function already emits the contextual error.
-      // We can show a generic toast here if we want, but the main debugging
-      // error will appear in the dev overlay.
+    try {
+      // Create the application and update the project status
+      await Promise.all([
+        addDocumentNonBlocking(projectVolunteersCol, newApplication),
+        updateDocumentNonBlocking(projectRef, { status: 'In Progress' })
+      ]);
+
       toast({
-        variant: 'destructive',
-        title: 'Application Failed',
-        description: 'Could not apply to the project due to a permission issue.',
+        title: "Project Selected!",
+        description: `You have applied to "${project.title}". You can track it on your dashboard.`,
       });
-    });
+
+    } catch (error) {
+       // The non-blocking functions already emit contextual errors.
+       // We show a generic toast here.
+       toast({
+         variant: 'destructive',
+         title: 'Application Failed',
+         description: 'Could not apply to the project due to a permission issue.',
+       });
+    }
   };
 
   const toggleFavorite = (e: React.MouseEvent) => {
@@ -190,8 +198,8 @@ export function ProjectCard({ project, user }: ProjectCardProps) {
         )}
       </CardContent>
       <CardFooter>
-        <Button className="w-full" onClick={handleSelectProject} disabled={isOwner}>
-          {isOwner ? "This is your project" : "Select Project"}
+        <Button className="w-full" onClick={handleSelectProject} disabled={isOwner || project.status !== 'Open'}>
+          {isOwner ? "This is your project" : project.status === 'In Progress' ? 'Project In Progress' : project.status === 'Completed' ? 'Project Completed' : "Select Project"}
         </Button>
       </CardFooter>
     </Card>

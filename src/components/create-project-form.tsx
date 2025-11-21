@@ -72,6 +72,7 @@ export function CreateProjectForm({ user, onProjectCreated }: CreateProjectFormP
         creatorName: user.displayName || 'Anonymous',
         creatorAvatarUrl: user.photoURL || '',
         createdAt: new Date(),
+        status: 'Open',
     };
     
     try {
