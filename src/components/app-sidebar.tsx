@@ -27,7 +27,7 @@ import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import { signOut } from '@/firebase/auth/auth-service';
 import { useToast } from '@/hooks/use-toast';
 import { AuthForm } from './auth-form';
-import { Dialog, DialogContent, DialogTrigger } from './ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from './ui/dialog';
 import React from 'react';
 import {
   SidebarContent,
@@ -40,6 +40,7 @@ import {
   useSidebar,
 } from './ui/sidebar';
 import { Input } from './ui/input';
+import { CreateProjectForm } from './create-project-form';
 
 const navLinks = [
   { href: '/', label: 'Projects', icon: FolderKanban },
@@ -181,11 +182,9 @@ export function AppSidebar() {
         { user && (
            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
-               <Button asChild variant="default" size="lg">
-                <Link href="/create-project">
+               <Button variant="default" size="lg" className="w-full">
                   <PlusCircle />
                   <span>Create Project</span>
-                </Link>
               </Button>
             </DialogTrigger>
              <DialogContent className="sm:max-w-[600px]">
