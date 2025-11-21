@@ -11,7 +11,7 @@ import type { Project } from '@/lib/types';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 
-function UserProjectList({ onOpenCreateDialog }: { onOpenCreateDialog: () => void }) {
+function UserProjectList() {
   const firestore = useFirestore();
   const { user, loading: authLoading } = useAuth();
   
@@ -97,7 +97,7 @@ export default function DashboardPage() {
 
   return (
     <div className="container mx-auto px-4 py-8">
-        <header className="mb-8">
+        <header className="mb-8 flex justify-between items-center">
            <div className="text-left">
             <h1 className="text-4xl md:text-5xl font-headline font-bold mb-2">
               My Dashboard
@@ -117,7 +117,7 @@ export default function DashboardPage() {
         </header>
         <section className="mt-12">
           <h2 className="text-2xl font-bold font-headline mb-6">My Projects</h2>
-          <UserProjectList onOpenCreateDialog={() => router.push('/create-project')} />
+          <UserProjectList />
         </section>
     </div>
   );

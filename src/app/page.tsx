@@ -58,9 +58,10 @@ function ProjectList() {
 
 
 export default function HomePage() {
+  const { user } = useAuth();
   return (
     <div className="container mx-auto px-4 py-8">
-      <header className="mb-8">
+      <header className="mb-8 flex justify-between items-center">
         <div className="text-left">
           <h1 className="text-4xl md:text-5xl font-headline font-bold mb-2">
             Find Your Next Volunteer Project
@@ -70,6 +71,16 @@ export default function HomePage() {
             projects, find your fit, and start making a difference today.
           </p>
         </div>
+         {user && (
+          <div className="mt-6">
+            <Button size="lg" asChild>
+                <Link href="/create-project">
+                    <PlusCircle className="mr-2 h-5 w-5" />
+                    Create New Project
+                </Link>
+            </Button>
+          </div>
+        )}
       </header>
       <ProjectList />
     </div>
