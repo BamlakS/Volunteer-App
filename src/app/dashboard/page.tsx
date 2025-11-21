@@ -85,9 +85,8 @@ function UserCreatedProjectsList({ user }: { user: any }) {
   );
 }
 
-function UserVolunteerProjectsList() {
+function UserVolunteerProjectsList({ user }: { user: any }) {
     const firestore = useFirestore();
-    const { user, loading: authLoading } = useAuth();
     const [projects, setProjects] = React.useState<Project[]>([]);
     const [isLoading, setIsLoading] = React.useState(true);
   
@@ -127,12 +126,14 @@ function UserVolunteerProjectsList() {
         }
       }
   
-      if (!authLoading) {
+      if (user) {
         fetchVolunteerProjects();
+      } else {
+        setIsLoading(false);
       }
-    }, [user, authLoading, firestore]);
+    }, [user, firestore]);
   
-    if (authLoading || isLoading) {
+    if (isLoading) {
       return (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {Array.from({ length: 3 }).map((_, i) => (
@@ -166,13 +167,13 @@ function UserVolunteerProjectsList() {
     );
   }
 
-  function FeaturedProjectsList({ user }: { user: any }) {
+  function OtherProjectsList({ user }: { user: any }) {
     const firestore = useFirestore();
     const [projects, setProjects] = React.useState<Project[]>([]);
     const [isLoading, setIsLoading] = React.useState(true);
   
     React.useEffect(() => {
-      async function fetchRandomProjects() {
+      async function fetchOtherProjects() {
         if (!user) {
             setIsLoading(false);
             return;
@@ -201,19 +202,17 @@ function UserVolunteerProjectsList() {
             .map(doc => ({ id: doc.id, ...doc.data() } as Project))
             .filter(p => !excludedIds.includes(p.id));
 
-          // Shuffle and take the first 3
-          const featured = availableProjects.sort(() => 0.5 - Math.random()).slice(0, 3);
-          setProjects(featured);
+          setProjects(availableProjects);
 
         } catch (error) {
-          console.error("Error fetching random projects:", error);
+          console.error("Error fetching other projects:", error);
           setProjects([]);
         } finally {
           setIsLoading(false);
         }
       }
   
-      fetchRandomProjects();
+      fetchOtherProjects();
     }, [user, firestore]);
   
     if (isLoading) {
@@ -235,7 +234,7 @@ function UserVolunteerProjectsList() {
     if (projects.length === 0) {
       return (
         <div className="text-center py-10 border-2 border-dashed rounded-lg">
-          <p className="text-muted-foreground">No new projects available to feature right now.</p>
+          <p className="text-muted-foreground">No new projects from other users are available right now.</p>
         </div>
       );
     }
@@ -296,13 +295,13 @@ export default function DashboardPage() {
         </header>
 
         <section className="mt-12">
-            <h2 className="text-2xl font-bold font-headline mb-6">Featured Projects</h2>
-            <FeaturedProjectsList user={user} />
+            <h2 className="text-2xl font-bold font-headline mb-6">Discover Other Projects</h2>
+            <OtherProjectsList user={user} />
         </section>
 
         <section className="mt-12">
           <h2 className="text-2xl font-bold font-headline mb-6">My Volunteer Projects</h2>
-          <UserVolunteerProjectsList />
+          <UserVolunteerProjectsList user={user}/>
         </section>
 
          <section className="mt-12">
