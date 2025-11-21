@@ -10,7 +10,7 @@ import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import { useAuth, useFirestore } from '@/firebase';
-import { doc, deleteDoc, collection } from 'firebase/firestore';
+import { doc, collection } from 'firebase/firestore';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -24,8 +24,6 @@ import {
 } from '@/components/ui/alert-dialog';
 import { addDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { deleteDocumentNonBlocking } from '@/firebase/non-blocking-updates';
-import { FirestorePermissionError } from '@/firebase/errors';
-import { errorEmitter } from '@/firebase/error-emitter';
 
 export function ProjectCard({ project }: { project: Project }) {
   const [isFavorited, setIsFavorited] = useState(false);
@@ -56,7 +54,7 @@ export function ProjectCard({ project }: { project: Project }) {
           title: "Project Selected!",
           description: `You have applied to "${project.title}". You can track it on your dashboard.`,
         });
-    }).catch(error => {
+    }).catch(() => {
       // The non-blocking function already emits the contextual error.
       // We can show a generic toast here if we want, but the main debugging
       // error will appear in the dev overlay.
@@ -77,7 +75,7 @@ export function ProjectCard({ project }: { project: Project }) {
     });
   }
 
-  const handleDeleteProject = async () => {
+  const handleDeleteProject = () => {
     if (!user || user.uid !== project.creatorId) {
         toast({
             variant: 'destructive',
@@ -88,11 +86,20 @@ export function ProjectCard({ project }: { project: Project }) {
     }
 
     const projectRef = doc(firestore, 'projects', project.id);
-    deleteDocumentNonBlocking(projectRef);
-    toast({
-        title: 'Project Deleted',
-        description: `"${project.title}" has been successfully deleted.`,
-    });
+    deleteDocumentNonBlocking(projectRef)
+      .then(() => {
+        toast({
+            title: 'Project Deleted',
+            description: `"${project.title}" has been successfully deleted.`,
+        });
+      })
+      .catch(() => {
+        toast({
+            variant: 'destructive',
+            title: 'Deletion Failed',
+            description: 'Could not delete the project due to a permission issue.',
+        });
+      });
   };
 
   const isOwner = user?.uid === project.creatorId;
