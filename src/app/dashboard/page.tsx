@@ -164,18 +164,18 @@ function NewOpportunities({ user }: { user: any }) {
         try {
           setIsLoading(true);
 
-          // Fetch the latest 10 projects, excluding those created by the current user.
-          // Firestore requires an orderBy clause on the same field as a '!=' or 'not-in' filter.
+          // Fetch the latest projects from the platform.
           const projectsQuery = query(
             collection(firestore, 'projects'),
-            where('creatorId', '!=', user.uid),
-            orderBy('creatorId'), // First order by the field in the inequality
-            orderBy('createdAt', 'desc'), // Then order by creation date
+            orderBy('createdAt', 'desc'),
             limit(10)
           );
           
           const projectsSnapshot = await getDocs(projectsQuery);
-          const availableProjects = projectsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Project));
+          // Filter out projects created by the current user on the client-side
+          const availableProjects = projectsSnapshot.docs
+            .map(doc => ({ id: doc.id, ...doc.data() } as Project))
+            .filter(project => project.creatorId !== user.uid);
           
           setProjects(availableProjects);
 
