@@ -182,5 +182,3 @@ export function ProjectCard({ project }: { project: Project }) {
     </Card>
   );
 }
-
-    
