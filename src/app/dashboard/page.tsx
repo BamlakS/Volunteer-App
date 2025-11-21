@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { collection, query, where } from 'firebase/firestore';
+import { collection, query, where, getDocs, doc, getDoc } from 'firebase/firestore';
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { useAuth } from '@/firebase/auth/use-user';
 import { ProjectCard } from '@/components/project-card';
@@ -20,7 +20,7 @@ import {
 } from '@/components/ui/dialog';
 import { CreateProjectForm } from '@/components/create-project-form';
 
-function UserProjectList() {
+function UserCreatedProjectsList() {
   const firestore = useFirestore();
   const { user, loading: authLoading } = useAuth();
   const [isDialogOpen, setIsDialogOpen] = React.useState(false);
@@ -34,7 +34,6 @@ function UserProjectList() {
 
   const handleProjectCreated = () => {
     setIsDialogOpen(false);
-    // The dashboard will auto-refresh, so no need to push router
   };
 
   if (authLoading || (user && projectsLoading)) {
@@ -55,7 +54,7 @@ function UserProjectList() {
 
   if (!projects || projects.length === 0) {
     return (
-      <div className="text-center py-10">
+      <div className="text-center py-10 border-2 border-dashed rounded-lg">
         <p className="text-muted-foreground mb-4">You haven't created any projects yet. Create one to get started!</p>
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
@@ -86,6 +85,87 @@ function UserProjectList() {
     </div>
   );
 }
+
+function UserVolunteerProjectsList() {
+    const firestore = useFirestore();
+    const { user, loading: authLoading } = useAuth();
+    const [projects, setProjects] = React.useState<Project[]>([]);
+    const [isLoading, setIsLoading] = React.useState(true);
+  
+    React.useEffect(() => {
+      async function fetchVolunteerProjects() {
+        if (!user) {
+          setIsLoading(false);
+          return;
+        }
+  
+        try {
+          setIsLoading(true);
+          const projectVolunteersQuery = query(
+            collection(firestore, 'projectVolunteers'),
+            where('volunteerId', '==', user.uid)
+          );
+          const querySnapshot = await getDocs(projectVolunteersQuery);
+          const projectIds = querySnapshot.docs.map(d => d.data().projectId);
+          
+          if (projectIds.length > 0) {
+            const projectDocs = await Promise.all(
+              projectIds.map(id => getDoc(doc(firestore, 'projects', id)))
+            );
+            
+            const fetchedProjects = projectDocs
+              .filter(docSnap => docSnap.exists())
+              .map(docSnap => ({ id: docSnap.id, ...docSnap.data() } as Project));
+            
+            setProjects(fetchedProjects);
+          } else {
+            setProjects([]);
+          }
+        } catch (error) {
+          console.error("Error fetching volunteer projects:", error);
+        } finally {
+          setIsLoading(false);
+        }
+      }
+  
+      if (!authLoading) {
+        fetchVolunteerProjects();
+      }
+    }, [user, authLoading, firestore]);
+  
+    if (authLoading || isLoading) {
+      return (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <div key={i} className="flex flex-col space-y-3">
+              <Skeleton className="h-[200px] w-full rounded-xl" />
+              <div className="space-y-2">
+                <Skeleton className="h-4 w-[250px]" />
+                <Skeleton className="h-4 w-[200px]" />
+              </div>
+            </div>
+          ))}
+        </div>
+      );
+    }
+  
+    if (projects.length === 0) {
+      return (
+        <div className="text-center py-10 border-2 border-dashed rounded-lg">
+          <p className="text-muted-foreground">You haven't selected any projects to volunteer for yet.</p>
+          <p className="text-sm text-muted-foreground mt-1">Browse projects on the homepage to get started.</p>
+        </div>
+      );
+    }
+  
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        {projects.map((project) => (
+          <ProjectCard key={project.id} project={project} />
+        ))}
+      </div>
+    );
+  }
 
 
 export default function DashboardPage() {
@@ -133,9 +213,15 @@ export default function DashboardPage() {
           </div>
         </header>
         <section className="mt-12">
-          <h2 className="text-2xl font-bold font-headline mb-6">My Projects</h2>
-          <UserProjectList />
+          <h2 className="text-2xl font-bold font-headline mb-6">My Volunteer Projects</h2>
+          <UserVolunteerProjectsList />
+        </section>
+         <section className="mt-12">
+          <h2 className="text-2xl font-bold font-headline mb-6">Created By Me</h2>
+          <UserCreatedProjectsList />
         </section>
     </div>
   );
 }
+
+    

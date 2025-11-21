@@ -10,7 +10,7 @@ import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import { useAuth, useFirestore } from '@/firebase';
-import { doc, deleteDoc } from 'firebase/firestore';
+import { doc, deleteDoc, collection } from 'firebase/firestore';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -22,6 +22,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
+import { addDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 
 export function ProjectCard({ project }: { project: Project }) {
   const [isFavorited, setIsFavorited] = useState(false);
@@ -30,9 +31,28 @@ export function ProjectCard({ project }: { project: Project }) {
   const firestore = useFirestore();
 
   const handleSelectProject = () => {
+    if (!user) {
+      toast({
+        variant: 'destructive',
+        title: 'Please log in',
+        description: 'You need to be logged in to select a project.',
+      });
+      return;
+    }
+    
+    const projectVolunteersCol = collection(firestore, 'projectVolunteers');
+    const newApplication = {
+      projectId: project.id,
+      volunteerId: user.uid,
+      status: 'applied', // You can add a status
+      appliedAt: new Date(),
+    };
+
+    addDocumentNonBlocking(projectVolunteersCol, newApplication);
+
     toast({
       title: "Project Selected!",
-      description: `You have been added to "${project.title}". Check your messages for details.`,
+      description: `You have applied to "${project.title}". You can track it on your dashboard.`,
     });
   };
 
@@ -140,17 +160,19 @@ export function ProjectCard({ project }: { project: Project }) {
         <div>
           <h4 className="font-semibold mb-2 text-sm">Required Skills</h4>
           <div className="flex flex-wrap gap-1">
-            {project.skills.map((skill) => (
+            {project.skills && project.skills.map((skill) => (
               <Badge key={skill} variant="secondary">
                 {skill}
               </Badge>
             ))}
           </div>
         </div>
-        <div className="flex items-center text-muted-foreground text-sm pt-2">
-          <Clock className="mr-2 h-4 w-4" />
-          <span>{project.timeCommitment}</span>
-        </div>
+        {project.timeCommitment && (
+          <div className="flex items-center text-muted-foreground text-sm pt-2">
+            <Clock className="mr-2 h-4 w-4" />
+            <span>{project.timeCommitment}</span>
+          </div>
+        )}
       </CardContent>
       <CardFooter>
         <Button className="w-full" onClick={handleSelectProject} disabled={isOwner}>
@@ -160,3 +182,5 @@ export function ProjectCard({ project }: { project: Project }) {
     </Card>
   );
 }
+
+    

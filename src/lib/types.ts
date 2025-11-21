@@ -5,7 +5,7 @@ export type Project = {
   title: string;
   description: string;
   skills: Skill[];
-  timeCommitment: string;
+  timeCommitment?: string;
   creatorId: string;
   creatorName: string;
   creatorAvatarUrl?: string;
