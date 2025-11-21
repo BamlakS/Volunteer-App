@@ -10,12 +10,29 @@ import { PlusCircle } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import type { Project } from '@/lib/types';
 import Link from 'next/link';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogTrigger,
+} from '@/components/ui/dialog';
+import { CreateProjectForm } from '@/components/create-project-form';
+import { useRouter } from 'next/navigation';
 
 function ProjectList() {
   const firestore = useFirestore();
   const projectsQuery = useMemoFirebase(() => collection(firestore, 'projects'), [firestore]);
   const { data: projects, isLoading } = useCollection<Project>(projectsQuery);
   const { user } = useAuth();
+  const router = useRouter();
+  const [isDialogOpen, setIsDialogOpen] = React.useState(false);
+
+  const handleProjectCreated = () => {
+    setIsDialogOpen(false);
+    router.push('/dashboard');
+  };
   
   if (isLoading) {
     return (
@@ -35,12 +52,31 @@ function ProjectList() {
 
   if (!projects || projects.length === 0) {
     return (
-        <div className="text-center py-20">
+        <div className="text-center py-20 flex flex-col items-center justify-center">
              {!user && (
                 <p className="text-muted-foreground">No projects have been created yet. Log in to create one!</p>
              )}
              {user && (
-                <p className="text-muted-foreground">No projects have been created yet. Create one to get started!</p>
+                <div className="text-center">
+                    <p className="text-muted-foreground mb-4">No projects have been created yet. Create one to get started!</p>
+                     <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                      <DialogTrigger asChild>
+                        <Button size="lg">
+                            <PlusCircle className="mr-2 h-5 w-5" />
+                            Create a Project
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent className="sm:max-w-[600px]">
+                        <DialogHeader>
+                          <DialogTitle className="text-2xl font-headline">Create a New Project</DialogTitle>
+                          <DialogDescription>
+                            Fill out the details below to list your project for volunteers.
+                          </DialogDescription>
+                        </DialogHeader>
+                        <CreateProjectForm onProjectCreated={handleProjectCreated} />
+                      </DialogContent>
+                    </Dialog>
+                </div>
              )}
         </div>
     );
@@ -60,7 +96,7 @@ export default function HomePage() {
   const { user } = useAuth();
   return (
     <div className="container mx-auto px-4 py-8">
-      <header className="mb-8 flex justify-between items-center">
+      <header className="mb-8">
         <div className="text-left">
           <h1 className="text-4xl md:text-5xl font-headline font-bold mb-2">
             Find Your Next Volunteer Project
@@ -70,16 +106,6 @@ export default function HomePage() {
             projects, find your fit, and start making a difference today.
           </p>
         </div>
-         {user && (
-          <div className="mt-6">
-            <Button size="lg" asChild>
-                <Link href="/create-project">
-                    <PlusCircle className="mr-2 h-5 w-5" />
-                    Create New Project
-                </Link>
-            </Button>
-          </div>
-        )}
       </header>
       <ProjectList />
     </div>

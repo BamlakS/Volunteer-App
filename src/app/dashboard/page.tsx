@@ -11,10 +11,21 @@ import { Skeleton } from '@/components/ui/skeleton';
 import type { Project } from '@/lib/types';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogTrigger,
+} from '@/components/ui/dialog';
+import { CreateProjectForm } from '@/components/create-project-form';
 
 function UserProjectList() {
   const firestore = useFirestore();
   const { user, loading: authLoading } = useAuth();
+  const router = useRouter();
+  const [isDialogOpen, setIsDialogOpen] = React.useState(false);
   
   const projectsQuery = useMemoFirebase(() => {
     if (!user) return null;
@@ -22,6 +33,11 @@ function UserProjectList() {
   }, [firestore, user]);
 
   const { data: projects, isLoading: projectsLoading } = useCollection<Project>(projectsQuery);
+
+  const handleProjectCreated = () => {
+    setIsDialogOpen(false);
+    // The dashboard will auto-refresh, so no need to push router
+  };
 
   if (authLoading || (user && projectsLoading)) {
     return (
@@ -42,7 +58,24 @@ function UserProjectList() {
   if (!projects || projects.length === 0) {
     return (
       <div className="text-center py-10">
-        <p className="text-muted-foreground">You haven't created any projects yet. Get started by creating one!</p>
+        <p className="text-muted-foreground mb-4">You haven't created any projects yet. Get started by creating one!</p>
+        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+          <DialogTrigger asChild>
+            <Button size="lg">
+                <PlusCircle className="mr-2 h-5 w-5" />
+                Create a Project
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="sm:max-w-[600px]">
+            <DialogHeader>
+              <DialogTitle className="text-2xl font-headline">Create a New Project</DialogTitle>
+              <DialogDescription>
+                Fill out the details below to list your project for volunteers.
+              </DialogDescription>
+            </DialogHeader>
+            <CreateProjectForm onProjectCreated={handleProjectCreated} />
+          </DialogContent>
+        </Dialog>
       </div>
     );
   }
@@ -91,7 +124,7 @@ export default function DashboardPage() {
 
   return (
     <div className="container mx-auto px-4 py-8">
-        <header className="mb-8 flex justify-between items-center">
+        <header className="mb-8">
            <div className="text-left">
             <h1 className="text-4xl md:text-5xl font-headline font-bold mb-2">
               My Dashboard
@@ -100,14 +133,6 @@ export default function DashboardPage() {
               Manage your created projects and view your contributions.
             </p>
           </div>
-           <div className="mt-6">
-                <Button size="lg" asChild>
-                    <Link href="/create-project">
-                        <PlusCircle className="mr-2 h-5 w-5" />
-                        Create New Project
-                    </Link>
-                </Button>
-            </div>
         </header>
         <section className="mt-12">
           <h2 className="text-2xl font-bold font-headline mb-6">My Projects</h2>
