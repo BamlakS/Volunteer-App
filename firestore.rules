@@ -181,9 +181,11 @@ service cloud.firestore {
      */
     match /chats/{chatId}/messages/{messageId} {
       allow get, list: if isChatParticipant(chatId);
-      allow create: if isChatParticipant(chatId) && request.resource.data.senderId == request.auth.uid;
+      allow create: if isChatParticipant(charId) && request.resource.data.senderId == request.auth.uid;
       allow update: if false; // Messages are immutable.
       allow delete: if isExistingDoc() && isChatParticipant(chatId) && isOwner(resource.data.senderId);
     }
   }
 }
+
+    
