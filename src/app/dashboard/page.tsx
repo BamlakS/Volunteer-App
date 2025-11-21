@@ -169,13 +169,15 @@ function NewOpportunities({ user }: { user: any }) {
           
           let allProjectsQuery;
           if (excludedIds.length > 0) {
+            // Firestore 'not-in' has a limit of 10, so we slice if needed
+            const clampedExcludedIds = excludedIds.slice(0, 10);
             allProjectsQuery = query(
               collection(firestore, 'projects'),
-              where('__name__', 'not-in', excludedIds.slice(0,10)), // Firestore 'not-in' has a limit of 10
-              limit(2)
+              where('__name__', 'not-in', clampedExcludedIds),
+              limit(4) // Fetch a few projects
             );
           } else {
-            allProjectsQuery = query(collection(firestore, 'projects'), limit(2));
+            allProjectsQuery = query(collection(firestore, 'projects'), limit(4));
           }
 
           const allProjectsSnapshot = await getDocs(allProjectsQuery);
@@ -186,10 +188,11 @@ function NewOpportunities({ user }: { user: any }) {
 
         } catch (error) {
           console.error("Error fetching other projects:", error);
+          // Fallback in case of query error (e.g. empty excludedIds with not-in)
           const fallbackQuery = query(collection(firestore, 'projects'), limit(5));
           const fallbackSnapshot = await getDocs(fallbackQuery);
           const fallbackProjects = fallbackSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Project));
-          setProjects(fallbackProjects.filter(p => p.creatorId !== user.uid).slice(0,2));
+          setProjects(fallbackProjects.filter(p => p.creatorId !== user.uid).slice(0,4));
 
         } finally {
           setIsLoading(false);
@@ -207,7 +210,7 @@ function NewOpportunities({ user }: { user: any }) {
                     <CardDescription>Check out the latest projects seeking volunteers.</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                    {[...Array(2)].map((_, i) => (
+                    {[...Array(3)].map((_, i) => (
                          <div key={i} className="flex items-center gap-4">
                             <Skeleton className="h-16 w-16 rounded-lg" />
                             <div className="flex-grow space-y-2">
@@ -268,11 +271,12 @@ export default function DashboardPage() {
       router.push('/');
     }
      const fetchTotalProjects = async () => {
+        if (!firestore) return;
         const projectsCol = collection(firestore, 'projects');
         const snapshot = await getCountFromServer(projectsCol);
         setTotalProjects(snapshot.data().count);
      }
-     fetchTotalProjects();
+     if (firestore) fetchTotalProjects();
 
   }, [user, loading, router, firestore]);
   
@@ -315,3 +319,5 @@ export default function DashboardPage() {
     </div>
   );
 }
+
+    
