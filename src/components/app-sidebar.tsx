@@ -10,6 +10,7 @@ import {
   FolderKanban,
   Users,
   MessageSquare,
+  Search,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from './ui/button';
@@ -38,11 +39,11 @@ import {
   SidebarTrigger,
   useSidebar,
 } from './ui/sidebar';
+import { Input } from './ui/input';
 
 const navLinks = [
   { href: '/', label: 'Projects', icon: FolderKanban },
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, auth: true },
-  { href: '/create-project', label: 'Create Project', icon: PlusCircle, auth: true },
   { href: '/volunteers', label: 'Volunteers', icon: Users },
   { href: '/messages', label: 'Messages', icon: MessageSquare, auth: true },
 ];
@@ -139,10 +140,30 @@ function AuthState() {
   );
 }
 
+export function TopBar() {
+    const { user } = useAuth();
+    return (
+        <div className="flex items-center justify-between h-16 px-4 border-b bg-card">
+            <div className="relative flex-1 max-w-md">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input placeholder="Search projects..." className="pl-10" />
+            </div>
+            {user && (
+                <Avatar>
+                    <AvatarImage src={user.photoURL || ''} alt={user.displayName || ''} />
+                    <AvatarFallback>{user.displayName?.charAt(0) || user.email?.charAt(0).toUpperCase() || 'VC'}</AvatarFallback>
+                </Avatar>
+            )}
+        </div>
+    )
+}
+
 export function AppSidebar() {
   const pathname = usePathname();
   const { user } = useAuth();
   const { state } = useSidebar();
+  const [isDialogOpen, setIsDialogOpen] = React.useState(false);
+
 
   return (
     <>
@@ -158,14 +179,25 @@ export function AppSidebar() {
 
       <SidebarContent className="p-2">
         { user && (
-          <div className="flex flex-col gap-2">
-            <Button asChild variant="default" size="lg">
-              <Link href="/create-project">
-                <PlusCircle />
-                <span>Create Project</span>
-              </Link>
-            </Button>
-          </div>
+           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+            <DialogTrigger asChild>
+               <Button asChild variant="default" size="lg">
+                <Link href="/create-project">
+                  <PlusCircle />
+                  <span>Create Project</span>
+                </Link>
+              </Button>
+            </DialogTrigger>
+             <DialogContent className="sm:max-w-[600px]">
+              <DialogHeader>
+                <DialogTitle className="text-2xl font-headline">Create a New Project</DialogTitle>
+                <DialogDescription>
+                  Fill out the details below to list your project for volunteers.
+                </DialogDescription>
+              </DialogHeader>
+              <CreateProjectForm user={user} onProjectCreated={() => setIsDialogOpen(false)} />
+            </DialogContent>
+          </Dialog>
         )}
 
         <SidebarMenu className="mt-4">

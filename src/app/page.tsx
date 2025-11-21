@@ -6,7 +6,7 @@ import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { useAuth } from '@/firebase/auth/use-user';
 import { ProjectCard } from '@/components/project-card';
 import { Button } from '@/components/ui/button';
-import { PlusCircle } from 'lucide-react';
+import { PlusCircle, Search } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import type { Project } from '@/lib/types';
 import {
@@ -20,6 +20,7 @@ import {
 import { CreateProjectForm } from '@/components/create-project-form';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 function ProjectList() {
   const firestore = useFirestore();
@@ -52,7 +53,7 @@ function ProjectList() {
 
   if (!projects || projects.length === 0) {
     return (
-        <div className="text-center py-20 flex flex-col items-center justify-center border-2 border-dashed rounded-lg">
+        <div className="text-center py-20 flex flex-col items-center justify-center border-2 border-dashed rounded-lg mt-8">
              <h3 className="text-xl font-semibold mb-2">No Projects Found</h3>
              <p className="text-muted-foreground mb-4">Be the first one to create a project!</p>
              {user && (
@@ -90,31 +91,49 @@ function ProjectList() {
 
 export default function HomePage() {
   const { user } = useAuth();
+  const [isDialogOpen, setIsDialogOpen] = React.useState(false);
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <header className="mb-8">
-        <div className="flex flex-wrap justify-between items-center gap-4">
-          <div className="flex-grow">
-            <h1 className="text-4xl md:text-5xl font-headline font-bold mb-2">
-              Find Your Next Volunteer Project
-            </h1>
-            <p className="text-lg text-muted-foreground max-w-2xl">
-              Connect with non-profits and use your tech skills for good. Browse
-              projects, find your fit, and start making a difference today.
-            </p>
-          </div>
-          {user && (
-            <Button asChild size="lg">
-              <Link href="/create-project">
-                <PlusCircle className="mr-2 h-5 w-5" />
-                Create New Project
-              </Link>
-            </Button>
+       <header className="mb-8">
+        <div className="flex justify-between items-center mb-6">
+          <h1 className="text-3xl font-bold font-headline">Projects</h1>
+           {user && (
+              <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button>
+                    <PlusCircle className="mr-2 h-4 w-4" />
+                    Create Project
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-[600px]">
+                  <DialogHeader>
+                    <DialogTitle className="text-2xl font-headline">Create a New Project</DialogTitle>
+                    <DialogDescription>
+                      Fill out the details below to list your project for volunteers.
+                    </DialogDescription>
+                  </DialogHeader>
+                  <CreateProjectForm user={user} onProjectCreated={() => setIsDialogOpen(false)} />
+                </DialogContent>
+              </Dialog>
           )}
         </div>
+
+        <Tabs defaultValue="all">
+          <TabsList className="bg-transparent p-0 border-b-0 rounded-none">
+            <TabsTrigger value="all" className="data-[state=active]:shadow-none data-[state=active]:border-b-2 border-primary rounded-none">All</TabsTrigger>
+            <TabsTrigger value="open" className="data-[state=active]:shadow-none data-[state=active]:border-b-2 border-primary rounded-none">Open</TabsTrigger>
+            <TabsTrigger value="in-progress" className="data-[state=active]:shadow-none data-[state=active]:border-b-2 border-primary rounded-none">In Progress</TabsTrigger>
+            <TabsTrigger value="completed" className="data-[state=active]:shadow-none data-[state=active]:border-b-2 border-primary rounded-none">Completed</TabsTrigger>
+          </TabsList>
+          <TabsContent value="all" className="mt-6">
+            <ProjectList />
+          </TabsContent>
+          <TabsContent value="open" className="mt-6 text-center text-muted-foreground py-16">Filtering by 'Open' is not yet implemented.</TabsContent>
+          <TabsContent value="in-progress" className="mt-6 text-center text-muted-foreground py-16">Filtering by 'In Progress' is not yet implemented.</TabsContent>
+          <TabsContent value="completed" className="mt-6 text-center text-muted-foreground py-16">Filtering by 'Completed' is not yet implemented.</TabsContent>
+        </Tabs>
       </header>
-      <ProjectList />
     </div>
   );
 }

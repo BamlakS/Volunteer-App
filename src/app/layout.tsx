@@ -3,7 +3,7 @@ import './globals.css';
 import { Toaster } from '@/components/ui/toaster';
 import { FirebaseClientProvider } from '@/firebase/client-provider';
 import { Sidebar, SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
-import { AppSidebar } from '@/components/app-sidebar';
+import { AppSidebar, TopBar } from '@/components/app-sidebar';
 
 export const metadata: Metadata = {
   title: 'VolunteerConnect',
@@ -29,6 +29,7 @@ export default function RootLayout({
                 <AppSidebar />
               </Sidebar>
               <SidebarInset>
+                <TopBar />
                 <main>{children}</main>
               </SidebarInset>
               <Toaster />
