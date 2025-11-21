@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { collection, query, where, getDocs, doc, getDoc, limit, getCountFromServer } from 'firebase/firestore';
+import { collection, query, where, getDocs, doc, getDoc, limit, getCountFromServer, orderBy } from 'firebase/firestore';
 import { useFirestore } from '@/firebase';
 import { useAuth } from '@/firebase/auth/use-user';
 import { Button } from '@/components/ui/button';
@@ -163,34 +163,18 @@ function NewOpportunities({ user }: { user: any }) {
         }
         try {
           setIsLoading(true);
-          const createdProjectsQuery = query(collection(firestore, 'projects'), where('creatorId', '==', user.uid));
-          const volunteerProjectsQuery = query(collection(firestore, 'projectVolunteers'), where('volunteerId', '==', user.uid));
-  
-          const [createdSnapshot, volunteerSnapshot] = await Promise.all([
-            getDocs(createdProjectsQuery), 
-            getDocs(volunteerProjectsQuery)
-          ]);
-  
-          const createdIds = createdSnapshot.docs.map(d => d.id);
-          const volunteerProjectIds = volunteerSnapshot.docs.map(d => d.data().projectId);
-          const excludedIds = [...new Set([...createdIds, ...volunteerProjectIds])];
-          
-          let allProjectsQuery;
-          if (excludedIds.length > 0) {
-            // Firestore 'not-in' has a limit of 10, so we slice if needed
-            const clampedExcludedIds = excludedIds.slice(0, 10);
-            allProjectsQuery = query(
-              collection(firestore, 'projects'),
-              where('__name__', 'not-in', clampedExcludedIds),
-              limit(10) 
-            );
-          } else {
-            allProjectsQuery = query(collection(firestore, 'projects'), limit(10));
-          }
 
-          const allProjectsSnapshot = await getDocs(allProjectsQuery);
-          const availableProjects = allProjectsSnapshot.docs
-            .map(doc => ({ id: doc.id, ...doc.data() } as Project));
+          // Fetch the latest 10 projects, excluding those created by the current user.
+          const projectsQuery = query(
+            collection(firestore, 'projects'),
+            where('creatorId', '!=', user.uid),
+            orderBy('creatorId'), // Firestore requires an orderBy when using a '!=' filter.
+            orderBy('createdAt', 'desc'),
+            limit(10)
+          );
+          
+          const projectsSnapshot = await getDocs(projectsQuery);
+          const availableProjects = projectsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Project));
           
           setProjects(availableProjects);
 
@@ -334,5 +318,3 @@ export default function DashboardPage() {
     </div>
   );
 }
-
-    
