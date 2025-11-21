@@ -73,9 +73,8 @@ function ActiveProjects({ user }: { user: any }) {
           setProjects([]);
         }
       } catch (error: any) {
-        console.error("Error fetching volunteer projects:", error);
         const permissionError = new FirestorePermissionError({
-            path: `projectVolunteers or projects`,
+            path: 'projectVolunteers',
             operation: 'list',
           });
         errorEmitter.emit('permission-error', permissionError);
@@ -167,7 +166,10 @@ function NewOpportunities({ user }: { user: any }) {
           const createdProjectsQuery = query(collection(firestore, 'projects'), where('creatorId', '==', user.uid));
           const volunteerProjectsQuery = query(collection(firestore, 'projectVolunteers'), where('volunteerId', '==', user.uid));
   
-          const [createdSnapshot, volunteerSnapshot] = await Promise.all([getDocs(createdProjectsQuery), getDocs(volunteerProjectsQuery)]);
+          const [createdSnapshot, volunteerSnapshot] = await Promise.all([
+            getDocs(createdProjectsQuery), 
+            getDocs(volunteerProjectsQuery)
+          ]);
   
           const createdIds = createdSnapshot.docs.map(d => d.id);
           const volunteerProjectIds = volunteerSnapshot.docs.map(d => d.data().projectId);
@@ -180,10 +182,10 @@ function NewOpportunities({ user }: { user: any }) {
             allProjectsQuery = query(
               collection(firestore, 'projects'),
               where('__name__', 'not-in', clampedExcludedIds),
-              limit(4) // Fetch a few projects
+              limit(10) 
             );
           } else {
-            allProjectsQuery = query(collection(firestore, 'projects'), limit(4));
+            allProjectsQuery = query(collection(firestore, 'projects'), limit(10));
           }
 
           const allProjectsSnapshot = await getDocs(allProjectsQuery);
@@ -193,9 +195,8 @@ function NewOpportunities({ user }: { user: any }) {
           setProjects(availableProjects);
 
         } catch (error: any) {
-          console.error("Error fetching other projects:", error);
           const permissionError = new FirestorePermissionError({
-            path: 'projects or projectVolunteers',
+            path: 'projects',
             operation: 'list'
           });
           errorEmitter.emit('permission-error', permissionError);
