@@ -9,7 +9,7 @@ import { Button, buttonVariants } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
-import { useAuth, useFirestore } from '@/firebase';
+import { useFirestore } from '@/firebase';
 import { doc, collection } from 'firebase/firestore';
 import {
   AlertDialog,
@@ -24,11 +24,16 @@ import {
 } from '@/components/ui/alert-dialog';
 import { addDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { deleteDocumentNonBlocking } from '@/firebase/non-blocking-updates';
+import type { User as FirebaseUser } from 'firebase/auth';
 
-export function ProjectCard({ project }: { project: Project }) {
+type ProjectCardProps = {
+  project: Project;
+  user: FirebaseUser | null;
+};
+
+export function ProjectCard({ project, user }: ProjectCardProps) {
   const [isFavorited, setIsFavorited] = useState(false);
   const { toast } = useToast();
-  const { user } = useAuth();
   const firestore = useFirestore();
 
   const handleSelectProject = () => {

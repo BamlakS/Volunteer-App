@@ -20,11 +20,10 @@ import {
 } from '@/components/ui/dialog';
 import { CreateProjectForm } from '@/components/create-project-form';
 
-function UserCreatedProjectsList() {
+function UserCreatedProjectsList({ user }: { user: any }) {
   const firestore = useFirestore();
-  const { user, loading: authLoading } = useAuth();
   const [isDialogOpen, setIsDialogOpen] = React.useState(false);
-  
+
   const projectsQuery = useMemoFirebase(() => {
     if (!user) return null;
     return query(collection(firestore, 'projects'), where('creatorId', '==', user.uid));
@@ -36,7 +35,7 @@ function UserCreatedProjectsList() {
     setIsDialogOpen(false);
   };
 
-  if (authLoading || (user && projectsLoading)) {
+  if (projectsLoading) {
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
         {Array.from({ length: 3 }).map((_, i) => (
@@ -80,7 +79,7 @@ function UserCreatedProjectsList() {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
       {projects.map((project) => (
-        <ProjectCard key={project.id} project={project} />
+        <ProjectCard key={project.id} project={project} user={user} />
       ))}
     </div>
   );
@@ -161,7 +160,7 @@ function UserVolunteerProjectsList() {
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
         {projects.map((project) => (
-          <ProjectCard key={project.id} project={project} />
+          <ProjectCard key={project.id} project={project} user={user} />
         ))}
       </div>
     );
@@ -218,7 +217,7 @@ export default function DashboardPage() {
         </section>
          <section className="mt-12">
           <h2 className="text-2xl font-bold font-headline mb-6">Created By Me</h2>
-          <UserCreatedProjectsList />
+          <UserCreatedProjectsList user={user} />
         </section>
     </div>
   );
