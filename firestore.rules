@@ -131,7 +131,7 @@ service cloud.firestore {
      */
     match /projectVolunteers/{projectVolunteerId} {
       allow get: if isOwner(resource.data.volunteerId) || isCreator(get(/databases/$(database)/documents/projects/$(resource.data.projectId)).data);
-      allow list: if request.query.where[0][0] == 'volunteerId' && request.query.where[0][2] == request.auth.uid;
+      allow list: if request.auth.uid != null && request.query.get('volunteerId') == request.auth.uid;
       allow create: if isSignedIn() && request.resource.data.volunteerId == request.auth.uid;
       allow update: if false; // Applications are immutable; they can be created or deleted.
       allow delete: if isExistingDoc() && (isOwner(resource.data.volunteerId) || isCreator(get(/databases/$(database)/documents/projects/$(resource.data.projectId)).data));
