@@ -183,17 +183,17 @@ export function ProjectCard({ project, user }: ProjectCardProps) {
         <div>
           <h4 className="font-semibold mb-2 text-sm">Required Skills</h4>
           <div className="flex flex-wrap gap-2">
-            {project.requiredSkills && project.requiredSkills.map((skill) => (
+            {(project.requiredSkills || []).map((skill) => (
               <Badge key={skill} variant="secondary">
                 {skill}
               </Badge>
             ))}
           </div>
         </div>
-        {project.timeCommitment && (
+        {project.estimatedTimeCommitment && (
           <div className="flex items-center text-muted-foreground text-sm pt-2">
             <Clock className="mr-2 h-4 w-4" />
-            <span>{project.timeCommitment}</span>
+            <span>{project.estimatedTimeCommitment}</span>
           </div>
         )}
       </CardContent>
