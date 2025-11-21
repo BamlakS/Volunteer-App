@@ -14,7 +14,7 @@
  *
  * Key Security Decisions:
  * - Public Projects: Projects are public-read, but writes are restricted to the user who created it,
- *   identified by the `creatorId` field in the project document.
+ *   identified by the `creatorId` field in the project document. An exception allows any user to claim an 'Open' project.
  * - Chat Security: Access to chat messages is secured by a parent /chats/{chatId} document,
  *   which is assumed to contain a `participantIds` array. This allows rules to efficiently check
  *   if a user is part of a conversation without inspecting every message.
@@ -129,10 +129,10 @@ service cloud.firestore {
       allow get, list: if true;
       allow create: if isCreator(request.resource.data);
       allow update: if isExistingDoc() && (
-        // Allow the creator to update their own project
+        // Allow the creator to update their own project, ensuring creatorId remains immutable.
         (isCreator(resource.data) && request.resource.data.creatorId == resource.data.creatorId) ||
-        // Allow any authenticated user to update ONLY the status to 'In Progress' if it's currently 'Open'
-        (isSignedIn() && isFieldUpdate('status', 'In Progress') && resource.data.status == 'Open')
+        // Allow any authenticated user to update ONLY the status to 'In Progress' if it's currently 'Open'.
+        (isSignedIn() && resource.data.status == 'Open' && request.resource.data.size() == 1 && request.resource.data.status == 'In Progress')
       );
       allow delete: if isExistingDoc() && isCreator(resource.data);
     }
@@ -150,8 +150,8 @@ service cloud.firestore {
      * @principle Access is granted only to the involved parties: the volunteer and the non-profit that owns the project.
      */
     match /projectVolunteers/{projectVolunteerId} {
-      allow get: if isOwner(resource.data.volunteerId) || isCreator(get(/databases/$(database)/documents/projects/$(resource.data.projectId)).data);
-      allow list: if request.query.where[0][0] == 'volunteerId' && request.query.where[0][2] == request.auth.uid;
+      allow get: if isSignedIn() && (isOwner(resource.data.volunteerId) || isCreator(get(/databases/$(database)/documents/projects/$(resource.data.projectId)).data));
+      allow list: if isSignedIn() && request.query.get("where")[0][0] == "volunteerId" && request.query.get("where")[0][2] == request.auth.uid;
       allow create: if isSignedIn() && request.resource.data.volunteerId == request.auth.uid;
       allow update: if false; // Applications are immutable; they can be created or deleted.
       allow delete: if isExistingDoc() && (isOwner(resource.data.volunteerId) || isCreator(get(/databases/$(database)/documents/projects/$(resource.data.projectId)).data));
