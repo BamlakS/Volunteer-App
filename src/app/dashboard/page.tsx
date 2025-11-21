@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { collection, query, where, getDocs, doc, getDoc } from 'firebase/firestore';
+import { collection, query, where, getDocs, doc, getDoc, limit } from 'firebase/firestore';
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { useAuth } from '@/firebase/auth/use-user';
 import { ProjectCard } from '@/components/project-card';
@@ -166,6 +166,81 @@ function UserVolunteerProjectsList() {
     );
   }
 
+  function FeaturedProject({ user }: { user: any }) {
+    const firestore = useFirestore();
+    const [project, setProject] = React.useState<Project | null>(null);
+    const [isLoading, setIsLoading] = React.useState(true);
+  
+    React.useEffect(() => {
+      async function fetchRandomProject() {
+        if (!user) {
+            setIsLoading(false);
+            return;
+        };
+
+        try {
+          setIsLoading(true);
+          // Fetch IDs of projects user has created or volunteered for
+          const createdProjectsQuery = query(collection(firestore, 'projects'), where('creatorId', '==', user.uid));
+          const volunteerProjectsQuery = query(collection(firestore, 'projectVolunteers'), where('volunteerId', '==', user.uid));
+  
+          const [createdSnapshot, volunteerSnapshot] = await Promise.all([
+            getDocs(createdProjectsQuery),
+            getDocs(volunteerProjectsQuery)
+          ]);
+  
+          const createdIds = createdSnapshot.docs.map(d => d.id);
+          const volunteerProjectIds = volunteerSnapshot.docs.map(d => d.data().projectId);
+          const excludedIds = [...new Set([...createdIds, ...volunteerProjectIds])];
+  
+          // Fetch all projects and filter out excluded ones on the client
+          const allProjectsQuery = query(collection(firestore, 'projects'));
+          const allProjectsSnapshot = await getDocs(allProjectsQuery);
+          
+          const availableProjects = allProjectsSnapshot.docs
+            .map(doc => ({ id: doc.id, ...doc.data() } as Project))
+            .filter(p => !excludedIds.includes(p.id));
+
+          if (availableProjects.length > 0) {
+            const randomIndex = Math.floor(Math.random() * availableProjects.length);
+            setProject(availableProjects[randomIndex]);
+          } else {
+            setProject(null);
+          }
+        } catch (error) {
+          console.error("Error fetching a random project:", error);
+          setProject(null);
+        } finally {
+          setIsLoading(false);
+        }
+      }
+  
+      fetchRandomProject();
+    }, [user, firestore]);
+  
+    if (isLoading) {
+      return (
+        <div className="flex flex-col space-y-3">
+          <Skeleton className="h-[200px] w-full rounded-xl" />
+          <div className="space-y-2">
+            <Skeleton className="h-4 w-[250px]" />
+            <Skeleton className="h-4 w-[200px]" />
+          </div>
+        </div>
+      );
+    }
+  
+    if (!project) {
+      return (
+        <div className="text-center py-10 border-2 border-dashed rounded-lg">
+          <p className="text-muted-foreground">No new projects available to feature right now.</p>
+        </div>
+      );
+    }
+  
+    return <ProjectCard project={project} user={user} />;
+  }
+
 
 export default function DashboardPage() {
   const { user, loading } = useAuth();
@@ -211,10 +286,19 @@ export default function DashboardPage() {
             </p>
           </div>
         </header>
+
+        <section className="mt-12">
+            <h2 className="text-2xl font-bold font-headline mb-6">Featured Project</h2>
+            <div className="max-w-md">
+                <FeaturedProject user={user} />
+            </div>
+        </section>
+
         <section className="mt-12">
           <h2 className="text-2xl font-bold font-headline mb-6">My Volunteer Projects</h2>
           <UserVolunteerProjectsList />
         </section>
+
          <section className="mt-12">
           <h2 className="text-2xl font-bold font-headline mb-6">Created By Me</h2>
           <UserCreatedProjectsList user={user} />
