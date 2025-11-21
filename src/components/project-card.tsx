@@ -119,9 +119,9 @@ export function ProjectCard({ project }: { project: Project }) {
                             variant="ghost"
                             size="icon"
                             aria-label="Delete project"
-                            className="rounded-full h-10 w-10 text-muted-foreground hover:text-destructive"
+                            className="rounded-full h-8 w-8 text-muted-foreground hover:text-destructive"
                         >
-                            <Trash2 className="h-5 w-5" />
+                            <Trash2 className="h-4 w-4" />
                         </Button>
                     </AlertDialogTrigger>
                     <AlertDialogContent>
@@ -146,12 +146,12 @@ export function ProjectCard({ project }: { project: Project }) {
                 size="icon"
                 onClick={toggleFavorite}
                 aria-label={isFavorited ? 'Remove from favorites' : 'Add to favorites'}
-                className="rounded-full h-10 w-10"
+                className="rounded-full h-8 w-8"
             >
                 <Heart
                 className={cn(
-                    'h-5 w-5 transition-all duration-300 group-hover:scale-110',
-                    isFavorited ? 'fill-destructive text-destructive' : 'text-muted-foreground'
+                    'h-4 w-4 transition-all duration-300',
+                    isFavorited ? 'fill-destructive text-destructive' : 'text-muted-foreground group-hover:text-destructive'
                 )}
                 />
             </Button>
@@ -162,7 +162,7 @@ export function ProjectCard({ project }: { project: Project }) {
         <p className="text-muted-foreground text-sm line-clamp-3">{project.description}</p>
         <div>
           <h4 className="font-semibold mb-2 text-sm">Required Skills</h4>
-          <div className="flex flex-wrap gap-1">
+          <div className="flex flex-wrap gap-2">
             {project.requiredSkills && project.requiredSkills.map((skill) => (
               <Badge key={skill} variant="secondary">
                 {skill}
