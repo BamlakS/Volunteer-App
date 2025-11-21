@@ -34,7 +34,7 @@ function ProjectList() {
 
   if (!projects || projects.length === 0) {
     return (
-        <div className="text-center py-16 bg-muted/50 rounded-lg flex flex-col items-center justify-center">
+        <>
              {user && (
                 <Button size="lg" asChild>
                     <Link href="/create-project">
@@ -43,7 +43,7 @@ function ProjectList() {
                     </Link>
                 </Button>
             )}
-        </div>
+        </>
     );
   }
 
