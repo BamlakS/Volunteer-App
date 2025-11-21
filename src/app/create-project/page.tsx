@@ -47,7 +47,7 @@ export default function CreateProjectPage() {
           <CardDescription>Fill out the details below to list your project for volunteers.</CardDescription>
         </CardHeader>
         <CardContent>
-          <CreateProjectForm onProjectCreated={() => router.push('/dashboard')} />
+          <CreateProjectForm user={user} onProjectCreated={() => router.push('/dashboard')} />
         </CardContent>
        </Card>
     </div>

@@ -17,30 +17,29 @@ import {
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
-import { useAuth, useFirestore } from '@/firebase';
+import { useFirestore } from '@/firebase';
 import { addDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { collection } from 'firebase/firestore';
 import { SKILLS } from '@/lib/skills';
 import { Badge } from './ui/badge';
-import { useRouter } from 'next/navigation';
+import type { User } from 'firebase/auth';
 
 const projectSchema = z.object({
   title: z.string().min(1, { message: 'Title is required.' }),
   description: z.string().min(1, { message: 'Description is required.' }),
   timeCommitment: z.string().optional(),
-  skills: z.array(z.string()),
+  skills: z.array(z.string()).optional(),
 });
 
 type CreateProjectFormProps = {
+  user: User | null;
   onProjectCreated?: () => void;
 };
 
-export function CreateProjectForm({ onProjectCreated }: CreateProjectFormProps) {
+export function CreateProjectForm({ user, onProjectCreated }: CreateProjectFormProps) {
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
-  const { user } = useAuth();
   const firestore = useFirestore();
-  const router = useRouter();
 
   const form = useForm<z.infer<typeof projectSchema>>({
     resolver: zodResolver(projectSchema),
@@ -67,6 +66,7 @@ export function CreateProjectForm({ onProjectCreated }: CreateProjectFormProps) 
         const projectsCol = collection(firestore, 'projects');
         const newProject = {
             ...values,
+            skills: values.skills || [], // Ensure skills is an array
             creatorId: user.uid,
             creatorName: user.displayName || 'Anonymous',
             creatorAvatarUrl: user.photoURL || '',
@@ -80,15 +80,11 @@ export function CreateProjectForm({ onProjectCreated }: CreateProjectFormProps) 
             description: 'Your new project has been listed successfully.',
         });
 
-        // Optimistically redirect
+        // Optimistically call the callback
         onProjectCreated?.();
         
-        // Wait for the document to be created to get the ID for the redirect
-        const docRef = await docRefPromise;
-        if(docRef) {
-          // No redirect here, onProjectCreated handles it.
-        }
-
+        // Wait for the document to be created to get the ID for any further action if needed
+        await docRefPromise;
 
     } catch (error: any) {
       console.error('Error creating project:', error);
@@ -103,7 +99,7 @@ export function CreateProjectForm({ onProjectCreated }: CreateProjectFormProps) 
   }
 
   const toggleSkill = (skill: string) => {
-    const currentSkills = form.getValues('skills');
+    const currentSkills = form.getValues('skills') || [];
     const newSkills = currentSkills.includes(skill)
       ? currentSkills.filter((s) => s !== skill)
       : [...currentSkills, skill];
@@ -170,7 +166,7 @@ export function CreateProjectForm({ onProjectCreated }: CreateProjectFormProps) 
                         {SKILLS.map((skill) => (
                             <Badge
                                 key={skill}
-                                variant={form.getValues('skills').includes(skill) ? 'default' : 'secondary'}
+                                variant={(form.getValues('skills') || []).includes(skill) ? 'default' : 'secondary'}
                                 className="cursor-pointer"
                                 onClick={() => toggleSkill(skill)}
                             >

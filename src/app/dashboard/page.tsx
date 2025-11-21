@@ -10,7 +10,6 @@ import { PlusCircle } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import type { Project } from '@/lib/types';
 import { useRouter } from 'next/navigation';
-import Link from 'next/link';
 import {
   Dialog,
   DialogContent,
@@ -24,7 +23,6 @@ import { CreateProjectForm } from '@/components/create-project-form';
 function UserProjectList() {
   const firestore = useFirestore();
   const { user, loading: authLoading } = useAuth();
-  const router = useRouter();
   const [isDialogOpen, setIsDialogOpen] = React.useState(false);
   
   const projectsQuery = useMemoFirebase(() => {
@@ -73,7 +71,7 @@ function UserProjectList() {
                 Fill out the details below to list your project for volunteers.
               </DialogDescription>
             </DialogHeader>
-            <CreateProjectForm onProjectCreated={handleProjectCreated} />
+            <CreateProjectForm user={user} onProjectCreated={handleProjectCreated} />
           </DialogContent>
         </Dialog>
       </div>
