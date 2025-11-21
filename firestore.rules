@@ -80,6 +80,21 @@ service cloud.firestore {
     function isChatParticipant(chatId) {
       return isSignedIn() && request.auth.uid in get(/databases/$(database)/documents/chats/$(chatId)).data.participantIds;
     }
+    
+    /**
+     * Checks if incoming data map only contains a specific set of allowed keys.
+     */
+    function hasOnlyKeys(keys) {
+      return request.resource.data.keys().hasOnly(keys);
+    }
+
+    /**
+     * Checks if a specific field is being updated and nothing else.
+     */
+    function isFieldUpdate(field, value) {
+        return hasOnlyKeys([field]) && request.resource.data[field] == value;
+    }
+
 
     // --------------------------------------------------------------------
     // User Data (/users)
@@ -113,7 +128,12 @@ service cloud.firestore {
     match /projects/{projectId} {
       allow get, list: if true;
       allow create: if isCreator(request.resource.data);
-      allow update: if isExistingDoc() && isCreator(resource.data) && request.resource.data.creatorId == resource.data.creatorId;
+      allow update: if isExistingDoc() && (
+        // Allow the creator to update their own project
+        (isCreator(resource.data) && request.resource.data.creatorId == resource.data.creatorId) ||
+        // Allow any authenticated user to update ONLY the status to 'In Progress' if it's currently 'Open'
+        (isSignedIn() && isFieldUpdate('status', 'In Progress') && resource.data.status == 'Open')
+      );
       allow delete: if isExistingDoc() && isCreator(resource.data);
     }
 
@@ -131,7 +151,7 @@ service cloud.firestore {
      */
     match /projectVolunteers/{projectVolunteerId} {
       allow get: if isOwner(resource.data.volunteerId) || isCreator(get(/databases/$(database)/documents/projects/$(resource.data.projectId)).data);
-      allow list: if isSignedIn();
+      allow list: if request.query.where[0][0] == 'volunteerId' && request.query.where[0][2] == request.auth.uid;
       allow create: if isSignedIn() && request.resource.data.volunteerId == request.auth.uid;
       allow update: if false; // Applications are immutable; they can be created or deleted.
       allow delete: if isExistingDoc() && (isOwner(resource.data.volunteerId) || isCreator(get(/databases/$(database)/documents/projects/$(resource.data.projectId)).data));
