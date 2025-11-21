@@ -36,16 +36,11 @@ function ProjectList() {
   if (!projects || projects.length === 0) {
     return (
         <div className="text-center py-20">
-             {user && (
-                <Button size="lg" asChild>
-                    <Link href="/create-project">
-                        <PlusCircle className="mr-2 h-4 w-4" />
-                        Create Your First Project
-                    </Link>
-                </Button>
-            )}
              {!user && (
                 <p className="text-muted-foreground">No projects have been created yet. Log in to create one!</p>
+             )}
+             {user && (
+                <p className="text-muted-foreground">No projects have been created yet. Create one to get started!</p>
              )}
         </div>
     );

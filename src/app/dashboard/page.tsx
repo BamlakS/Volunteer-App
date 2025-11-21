@@ -42,12 +42,7 @@ function UserProjectList() {
   if (!projects || projects.length === 0) {
     return (
       <div className="text-center py-10">
-        <Button asChild size="lg">
-            <Link href="/create-project">
-                <PlusCircle className="mr-2 h-4 w-4" />
-                Create Your First Project
-            </Link>
-        </Button>
+        <p className="text-muted-foreground">You haven't created any projects yet. Get started by creating one!</p>
       </div>
     );
   }
