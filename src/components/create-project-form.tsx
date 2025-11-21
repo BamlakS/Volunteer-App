@@ -27,7 +27,7 @@ import { useRouter } from 'next/navigation';
 const projectSchema = z.object({
   title: z.string().min(1, { message: 'Title is required.' }),
   description: z.string().min(1, { message: 'Description is required.' }),
-  timeCommitment: z.string().min(3, { message: 'Please provide an estimated time commitment.' }),
+  timeCommitment: z.string().optional(),
   skills: z.array(z.string()).min(1, { message: 'Please select at least one skill.' }),
 });
 
@@ -149,7 +149,7 @@ export function CreateProjectForm({ onProjectCreated }: CreateProjectFormProps) 
           name="timeCommitment"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Estimated Time Commitment</FormLabel>
+              <FormLabel>Estimated Time Commitment (Optional)</FormLabel>
               <FormControl>
                 <Input placeholder="e.g., 5-10 hours/week for 3 months" {...field} />
               </FormControl>
