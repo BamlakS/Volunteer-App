@@ -10,11 +10,10 @@ import {
   FolderKanban,
   Users,
   MessageSquare,
-  PanelLeft,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from './ui/button';
-import { useAuth } from '@/firebase';
+import { useAuth } from '@/firebase/auth/use-user';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -36,10 +35,6 @@ import {
   SidebarMenu,
   SidebarMenuItem,
   SidebarMenuButton,
-  SidebarMenuSub,
-  SidebarMenuSubButton,
-  SidebarMenuSubItem,
-  SidebarSeparator,
   SidebarTrigger,
   useSidebar,
 } from './ui/sidebar';
@@ -47,6 +42,7 @@ import {
 const navLinks = [
   { href: '/', label: 'Projects', icon: FolderKanban },
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, auth: true },
+  { href: '/create-project', label: 'Create Project', icon: PlusCircle, auth: true },
   { href: '/volunteers', label: 'Volunteers', icon: Users },
   { href: '/messages', label: 'Messages', icon: MessageSquare, auth: true },
 ];
@@ -174,8 +170,6 @@ export function AppSidebar() {
 
         <SidebarMenu className="mt-4">
           {navLinks.map((link) => {
-            // Conditionally render the "Create Project" link for authenticated users
-            if (link.href === '/create-project' && !user) return null;
             if (link.auth && !user) return null;
             const isActive = pathname === link.href;
             return (

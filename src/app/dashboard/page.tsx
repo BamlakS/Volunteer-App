@@ -2,7 +2,8 @@
 
 import React from 'react';
 import { collection, query, where } from 'firebase/firestore';
-import { useAuth, useCollection, useFirestore, useMemoFirebase } from '@/firebase';
+import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
+import { useAuth } from '@/firebase/auth/use-user';
 import { ProjectCard } from '@/components/project-card';
 import { Button } from '@/components/ui/button';
 import { PlusCircle } from 'lucide-react';
@@ -40,12 +41,14 @@ function UserProjectList() {
 
   if (!projects || projects.length === 0) {
     return (
-      <Button asChild>
-          <Link href="/create-project">
-              <PlusCircle className="mr-2 h-4 w-4" />
-              Create Your First Project
-          </Link>
-      </Button>
+      <div className="text-center py-10">
+        <Button asChild size="lg">
+            <Link href="/create-project">
+                <PlusCircle className="mr-2 h-4 w-4" />
+                Create Your First Project
+            </Link>
+        </Button>
+      </div>
     );
   }
 
