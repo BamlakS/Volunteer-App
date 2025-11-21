@@ -23,6 +23,9 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { addDocumentNonBlocking } from '@/firebase/non-blocking-updates';
+import { deleteDocumentNonBlocking } from '@/firebase/non-blocking-updates';
+import { FirestorePermissionError } from '@/firebase/errors';
+import { errorEmitter } from '@/firebase/error-emitter';
 
 export function ProjectCard({ project }: { project: Project }) {
   const [isFavorited, setIsFavorited] = useState(false);
@@ -48,11 +51,20 @@ export function ProjectCard({ project }: { project: Project }) {
       appliedAt: new Date(),
     };
 
-    addDocumentNonBlocking(projectVolunteersCol, newApplication);
-
-    toast({
-      title: "Project Selected!",
-      description: `You have applied to "${project.title}". You can track it on your dashboard.`,
+    addDocumentNonBlocking(projectVolunteersCol, newApplication).then(() => {
+        toast({
+          title: "Project Selected!",
+          description: `You have applied to "${project.title}". You can track it on your dashboard.`,
+        });
+    }).catch(error => {
+      // The non-blocking function already emits the contextual error.
+      // We can show a generic toast here if we want, but the main debugging
+      // error will appear in the dev overlay.
+      toast({
+        variant: 'destructive',
+        title: 'Application Failed',
+        description: 'Could not apply to the project due to a permission issue.',
+      });
     });
   };
 
@@ -75,21 +87,12 @@ export function ProjectCard({ project }: { project: Project }) {
         return;
     }
 
-    try {
-        const projectRef = doc(firestore, 'projects', project.id);
-        await deleteDoc(projectRef);
-        toast({
-            title: 'Project Deleted',
-            description: `"${project.title}" has been successfully deleted.`,
-        });
-    } catch (error: any) {
-        console.error("Error deleting project:", error);
-        toast({
-            variant: 'destructive',
-            title: 'Error Deleting Project',
-            description: error.message || 'An unexpected error occurred.',
-        });
-    }
+    const projectRef = doc(firestore, 'projects', project.id);
+    deleteDocumentNonBlocking(projectRef);
+    toast({
+        title: 'Project Deleted',
+        description: `"${project.title}" has been successfully deleted.`,
+    });
   };
 
   const isOwner = user?.uid === project.creatorId;
@@ -160,7 +163,7 @@ export function ProjectCard({ project }: { project: Project }) {
         <div>
           <h4 className="font-semibold mb-2 text-sm">Required Skills</h4>
           <div className="flex flex-wrap gap-1">
-            {project.skills && project.skills.map((skill) => (
+            {project.requiredSkills && project.requiredSkills.map((skill) => (
               <Badge key={skill} variant="secondary">
                 {skill}
               </Badge>

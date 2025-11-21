@@ -4,7 +4,7 @@ export type Project = {
   id: string;
   title: string;
   description: string;
-  skills: Skill[];
+  requiredSkills: Skill[];
   timeCommitment?: string;
   creatorId: string;
   creatorName: string;
@@ -45,5 +45,3 @@ export type UserProfile = {
   avatarUrl:string;
   role: 'volunteer' | 'non-profit';
 };
-
-    

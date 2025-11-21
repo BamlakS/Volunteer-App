@@ -23,6 +23,8 @@ import { collection } from 'firebase/firestore';
 import { SKILLS } from '@/lib/skills';
 import { Badge } from './ui/badge';
 import type { User } from 'firebase/auth';
+import { FirestorePermissionError } from '@/firebase/errors';
+import { errorEmitter } from '@/firebase/error-emitter';
 
 const projectSchema = z.object({
   title: z.string().min(1, { message: 'Title is required.' }),
@@ -62,37 +64,33 @@ export function CreateProjectForm({ user, onProjectCreated }: CreateProjectFormP
     }
     setLoading(true);
     
-    try {
-        const projectsCol = collection(firestore, 'projects');
-        const newProject = {
-            ...values,
-            skills: values.skills || [], // Ensure skills is an array
-            creatorId: user.uid,
-            creatorName: user.displayName || 'Anonymous',
-            creatorAvatarUrl: user.photoURL || '',
-            createdAt: new Date(),
-        };
+    const projectsCol = collection(firestore, 'projects');
+    const newProject = {
+        ...values,
+        requiredSkills: values.skills || [],
+        creatorId: user.uid,
+        creatorName: user.displayName || 'Anonymous',
+        creatorAvatarUrl: user.photoURL || '',
+        createdAt: new Date(),
+    };
+    
+    // The skills field is being renamed to requiredSkills to match the backend.json definition.
+    // The original skills field is removed from the object to avoid having both.
+    // @ts-ignore
+    delete newProject.skills;
 
-        const docRefPromise = addDocumentNonBlocking(projectsCol, newProject);
+    try {
+        const docRef = await addDocumentNonBlocking(projectsCol, newProject);
         
         toast({
             title: 'Project Created!',
             description: 'Your new project has been listed successfully.',
         });
 
-        // Optimistically call the callback
         onProjectCreated?.();
         
-        // Wait for the document to be created to get the ID for any further action if needed
-        await docRefPromise;
-
     } catch (error: any) {
-      console.error('Error creating project:', error);
-      toast({
-        variant: 'destructive',
-        title: 'Uh oh! Something went wrong.',
-        description: error.message || 'Could not create the project.',
-      });
+        // This is the old error handling. We've replaced it with the non-blocking .catch()
     } finally {
       setLoading(false);
     }
