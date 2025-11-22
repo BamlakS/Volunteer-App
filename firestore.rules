@@ -130,10 +130,14 @@ service cloud.firestore {
       allow get, list: if true;
       allow create: if isCreator(request.resource.data);
       allow update: if isSignedIn() && isExistingDoc() && (
-        // The creator can update their own project, but not change the creatorId
+        // Condition 1: The original creator can update their own project, but not change the creatorId.
         (isCreator(resource.data) && request.resource.data.creatorId == resource.data.creatorId) ||
-        // Any signed-in user can claim an open project by updating ONLY the status field.
-        (resource.data.status == 'Open' && request.resource.data.status == 'In Progress' && request.resource.data.keys().hasOnly(['status']))
+        // Condition 2: Any signed-in user can claim an open project by updating ONLY the status field.
+        (
+          resource.data.status == 'Open' &&
+          request.resource.data.status == 'In Progress' &&
+          hasOnlyKeys(['status'])
+        )
       );
       allow delete: if isExistingDoc() && isCreator(resource.data);
     }
