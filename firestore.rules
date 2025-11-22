@@ -120,39 +120,14 @@ service cloud.firestore {
     // Project Data (/projects)
     // --------------------------------------------------------------------
     /**
-     * @description Manages public project listings. Any user (authenticated or not) can read projects.
+     * @description Manages public project listings. Any authenticated user can read and create projects.
+     * Only the creator can update or delete their own project.
      * @path /projects/{projectId}
-     * @allow An authenticated user can write to any project. An unauthenticated user can read.
-     * @deny An unauthenticated user cannot write.
-     * @principle Allow public browsing of projects, but require login for interaction.
      */
      match /projects/{projectId} {
         allow read: if true;
         allow create: if isSignedIn();
-        allow update: if isSignedIn() && (
-            // Condition 1: The user is the creator of the project and can edit it.
-            // The creatorId field cannot be changed after creation.
-            (isCreator(resource.data) && request.resource.data.creatorId == resource.data.creatorId) ||
-
-            // Condition 2: A volunteer is claiming an open project.
-            // This is allowed if the existing project status is 'Open',
-            // the user is not the creator, and they are only updating the 'status' field.
-            (
-              !isCreator(resource.data) &&
-              resource.data.status == 'Open' &&
-              request.resource.data.status == 'In Progress' &&
-              hasOnlyKeys(['status'])
-            ) ||
-            
-            // Condition 3: A volunteer or creator is completing a project.
-            (
-                (isCreator(resource.data) || isSignedIn()) &&
-                resource.data.status == 'In Progress' &&
-                request.resource.data.status == 'Completed' &&
-                hasOnlyKeys(['status'])
-            )
-        );
-        allow delete: if isCreator(resource.data);
+        allow update, delete: if isSignedIn() && isCreator(resource.data);
     }
 
 
