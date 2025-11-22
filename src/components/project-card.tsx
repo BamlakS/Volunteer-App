@@ -85,6 +85,25 @@ export function ProjectCard({ project, user }: ProjectCardProps) {
     }
   };
 
+  const handleCompleteProject = async () => {
+    const projectRef = doc(firestore, 'projects', project.id);
+    try {
+      await updateDocumentNonBlocking(projectRef, { status: 'Completed' });
+      toast({
+        title: 'Project Completed!',
+        description: `"${project.title}" has been moved to the completed section.`,
+      });
+      router.push('/?tab=completed', { scroll: false });
+      router.refresh();
+    } catch (error) {
+      toast({
+        variant: 'destructive',
+        title: 'Update Failed',
+        description: 'Could not complete the project due to a permission issue.',
+      });
+    }
+  };
+
   const toggleFavorite = (e: React.MouseEvent) => {
     e.stopPropagation();
     setIsFavorited(!isFavorited);
@@ -127,6 +146,16 @@ export function ProjectCard({ project, user }: ProjectCardProps) {
   const renderFooter = () => {
     switch (project.status) {
       case 'In Progress':
+        if (isOwner) {
+            return (
+              <div className="w-full grid grid-cols-2 gap-2">
+                <Button className="w-full" disabled>Project In Progress</Button>
+                <Button className="w-full bg-green-600 hover:bg-green-700 text-white" onClick={handleCompleteProject}>
+                  Project Completed
+                </Button>
+              </div>
+            );
+        }
         return <Button className="w-full" disabled>Project In Progress</Button>;
       case 'Completed':
         return <Button className="w-full" disabled>Project Completed</Button>;
