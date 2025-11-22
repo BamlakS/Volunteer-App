@@ -71,7 +71,7 @@ export function ProjectCard({ project, user }: ProjectCardProps) {
       });
 
       // Redirect to the projects page, focusing the 'In Progress' tab
-      router.push('/?tab=in-progress', { scroll: false });
+      router.push('/?tab=in-progress');
       router.refresh();
 
 
@@ -112,6 +112,7 @@ export function ProjectCard({ project, user }: ProjectCardProps) {
             title: 'Project Deleted',
             description: `"${project.title}" has been successfully deleted.`,
         });
+        router.refresh();
       })
       .catch(() => {
         toast({
