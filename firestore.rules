@@ -120,16 +120,18 @@ service cloud.firestore {
     // Project Data (/projects)
     // --------------------------------------------------------------------
     /**
-     * @description Manages public project listings. Any authenticated user can read and create projects.
-     * Only the creator can update or delete their own project.
+     * @description Manages public project listings.
      * @path /projects/{projectId}
      */
      match /projects/{projectId} {
+        // Anyone can read projects.
         allow read: if true;
+        // Any authenticated user can create a project.
         allow create: if isSignedIn();
+        // Any authenticated user can update a project (e.g., to change status).
+        allow update: if isSignedIn();
+        // Only the creator can delete their own project.
         allow delete: if isCreator();
-        // Allow update if user is the creator OR if they are an authenticated user ONLY changing the status field.
-        allow update: if isCreator() || (isSignedIn() && hasOnlyKeys(['status']));
     }
 
 
