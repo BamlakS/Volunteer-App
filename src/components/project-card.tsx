@@ -160,7 +160,7 @@ export function ProjectCard({ project, user }: ProjectCardProps) {
         return (
           <Button className="w-full" onClick={handleCompleteProject}>
             <CheckCircle className="mr-2 h-4 w-4" />
-            Complete Project
+            Mark as Completed
           </Button>
         );
       }
