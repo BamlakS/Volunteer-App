@@ -159,7 +159,7 @@ export function ProjectCard({ project, user }: ProjectCardProps) {
         return (
           <div className="flex gap-2 w-full">
             <Button className="w-full" disabled>Project In Progress</Button>
-            <Button onClick={handleCompleteProject} className="w-full" aria-label="Mark as Completed">
+            <Button onClick={handleCompleteProject} className="w-full bg-green-600 hover:bg-green-700" aria-label="Mark as Completed">
               Project Completed
             </Button>
           </div>
