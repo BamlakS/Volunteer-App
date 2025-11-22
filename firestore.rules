@@ -1,3 +1,4 @@
+
 /**
  * This Firestore Security Ruleset establishes a secure access model for the VolunteerConnect platform.
  *
@@ -187,5 +188,3 @@ service cloud.firestore {
     }
   }
 }
-
-    
