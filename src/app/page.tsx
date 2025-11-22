@@ -18,7 +18,7 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { CreateProjectForm } from '@/components/create-project-form';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
@@ -96,9 +96,17 @@ function ProjectList({ status }: { status?: 'All' | 'Open' | 'In Progress' | 'Co
 }
 
 
-export default function HomePage() {
+function HomePageContent() {
   const { user } = useAuth();
   const [isDialogOpen, setIsDialogOpen] = React.useState(false);
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const tab = searchParams.get('tab') || 'all';
+
+  const handleTabChange = (value: string) => {
+    router.push(`/?tab=${value}`, { scroll: false });
+  };
+
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -126,7 +134,7 @@ export default function HomePage() {
           )}
         </div>
 
-        <Tabs defaultValue="all">
+        <Tabs value={tab} onValueChange={handleTabChange}>
           <TabsList className="bg-transparent p-0 border-b-0 rounded-none">
             <TabsTrigger value="all" className="data-[state=active]:shadow-none data-[state=active]:border-b-2 border-primary rounded-none">All</TabsTrigger>
             <TabsTrigger value="open" className="data-[state=active]:shadow-none data-[state=active]:border-b-2 border-primary rounded-none">Open</TabsTrigger>
@@ -149,4 +157,13 @@ export default function HomePage() {
       </header>
     </div>
   );
+}
+
+
+export default function HomePage() {
+  return (
+    <React.Suspense fallback={<div>Loading...</div>}>
+      <HomePageContent />
+    </React.Suspense>
+  )
 }

@@ -11,6 +11,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import { useFirestore } from '@/firebase';
 import { doc, collection } from 'firebase/firestore';
+import { useRouter } from 'next/navigation';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -35,6 +36,7 @@ export function ProjectCard({ project, user }: ProjectCardProps) {
   const [isFavorited, setIsFavorited] = useState(false);
   const { toast } = useToast();
   const firestore = useFirestore();
+  const router = useRouter();
 
   const handleSelectProject = async () => {
     if (!user) {
@@ -65,8 +67,12 @@ export function ProjectCard({ project, user }: ProjectCardProps) {
 
       toast({
         title: "Project Selected!",
-        description: `You have applied to "${project.title}". You can track it on your dashboard.`,
+        description: `You have applied to "${project.title}". It is now in progress.`,
       });
+
+      // Redirect to the projects page, focusing the 'In Progress' tab
+      router.push('/?tab=in-progress');
+
 
     } catch (error) {
        // The non-blocking functions already emit contextual errors.
