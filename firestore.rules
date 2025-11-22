@@ -69,8 +69,8 @@ service cloud.firestore {
      * Checks if the authenticated user is the creator of a resource.
      * Assumes the resource data contains a `creatorId` field.
      */
-    function isCreator(data) {
-      return isSignedIn() && request.auth.uid == data.creatorId;
+    function isCreator() {
+      return isSignedIn() && request.auth.uid == resource.data.creatorId;
     }
 
     /**
@@ -127,7 +127,8 @@ service cloud.firestore {
      match /projects/{projectId} {
         allow read: if true;
         allow create: if isSignedIn();
-        allow update, delete: if isSignedIn() && isCreator(resource.data);
+        allow delete: if isCreator();
+        allow update: if isSignedIn() && (isCreator() || hasOnlyKeys(['status']));
     }
 
 
