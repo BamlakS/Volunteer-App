@@ -6,7 +6,7 @@ import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { useAuth } from '@/firebase/auth/use-user';
 import { ProjectCard } from '@/components/project-card';
 import { Button } from '@/components/ui/button';
-import { PlusCircle, Search } from 'lucide-react';
+import { PlusCircle } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import type { Project } from '@/lib/types';
 import {
@@ -19,7 +19,6 @@ import {
 } from '@/components/ui/dialog';
 import { CreateProjectForm } from '@/components/create-project-form';
 import { useRouter, useSearchParams } from 'next/navigation';
-import Link from 'next/link';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 function ProjectList({ status }: { status?: 'All' | 'Open' | 'In Progress' | 'Completed' }) {
@@ -106,6 +105,16 @@ function HomePageContent() {
   const handleTabChange = (value: string) => {
     router.push(`/?tab=${value}`, { scroll: false });
   };
+  
+  const getStatusFromTab = (tabValue: string) => {
+    switch (tabValue) {
+      case 'all': return 'All';
+      case 'open': return 'Open';
+      case 'in-progress': return 'In Progress';
+      case 'completed': return 'Completed';
+      default: return 'All';
+    }
+  }
 
 
   return (
