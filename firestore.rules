@@ -131,11 +131,26 @@ service cloud.firestore {
         allow create: if isSignedIn();
         allow update: if isSignedIn() && (
             // Condition 1: The user is the creator of the project and can edit it.
-            // Creator cannot be changed after creation.
+            // The creatorId field cannot be changed after creation.
             (isCreator(resource.data) && request.resource.data.creatorId == resource.data.creatorId) ||
-            // Condition 2: Any authenticated user is updating ONLY the status.
-            // This allows volunteers to claim or complete projects.
-            (hasOnlyKeys(['status']))
+
+            // Condition 2: A volunteer is claiming an open project.
+            // This is allowed if the existing project status is 'Open',
+            // the user is not the creator, and they are only updating the 'status' field.
+            (
+              !isCreator(resource.data) &&
+              resource.data.status == 'Open' &&
+              request.resource.data.status == 'In Progress' &&
+              hasOnlyKeys(['status'])
+            ) ||
+            
+            // Condition 3: A volunteer or creator is completing a project.
+            (
+                (isCreator(resource.data) || isSignedIn()) &&
+                resource.data.status == 'In Progress' &&
+                request.resource.data.status == 'Completed' &&
+                hasOnlyKeys(['status'])
+            )
         );
         allow delete: if isCreator(resource.data);
     }
