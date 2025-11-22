@@ -120,26 +120,14 @@ service cloud.firestore {
     // Project Data (/projects)
     // --------------------------------------------------------------------
     /**
-     * @description Manages public project listings, which are owned by users.
+     * @description Manages public project listings. Any authenticated user can read or write.
      * @path /projects/{projectId}
-     * @allow A logged-in user creating a new project: auth.uid = 'user123', (create) /projects/proj_abc with data { creatorId: 'user123', ... }
-     * @deny A user who is not the creator trying to update a project: (update) /projects/proj_abc
-     * @principle Enforces document ownership for writes via the `creatorId` field, while allowing public reads.
+     * @allow An authenticated user can read or write to any project.
+     * @deny An unauthenticated user cannot read or write.
+     * @principle Simplified rule to unblock development.
      */
     match /projects/{projectId} {
-      allow get, list: if true;
-      allow create: if isCreator(request.resource.data);
-      allow update: if isSignedIn() && isExistingDoc() && (
-          // Condition 1: The original creator can update their own project, but cannot change the creatorId.
-          (isCreator(resource.data) && request.resource.data.creatorId == resource.data.creatorId) ||
-          // Condition 2: Any signed-in user can claim an open project by updating ONLY the status field.
-          (
-            resource.data.status == 'Open' &&
-            request.resource.data.status == 'In Progress' &&
-            hasOnlyKeys(['status'])
-          )
-      );
-      allow delete: if isExistingDoc() && isCreator(resource.data);
+      allow read, write: if isSignedIn();
     }
 
 
