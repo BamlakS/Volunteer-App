@@ -128,7 +128,8 @@ service cloud.firestore {
         allow read: if true;
         allow create: if isSignedIn();
         allow delete: if isCreator();
-        allow update: if isSignedIn() && (isCreator() || hasOnlyKeys(['status']));
+        // Allow update if user is the creator OR if they are an authenticated user ONLY changing the status field.
+        allow update: if isCreator() || (isSignedIn() && hasOnlyKeys(['status']));
     }
 
 
