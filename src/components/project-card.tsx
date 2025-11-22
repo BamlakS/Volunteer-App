@@ -60,10 +60,9 @@ export function ProjectCard({ project, user }: ProjectCardProps) {
 
     try {
       // Create the application and update the project status
-      await Promise.all([
-        addDocumentNonBlocking(projectVolunteersCol, newApplication),
-        updateDocumentNonBlocking(projectRef, { status: 'In Progress' })
-      ]);
+      await addDocumentNonBlocking(projectVolunteersCol, newApplication);
+      await updateDocumentNonBlocking(projectRef, { status: 'In Progress' });
+
 
       toast({
         title: "Project Selected!",
@@ -71,7 +70,7 @@ export function ProjectCard({ project, user }: ProjectCardProps) {
       });
 
       // Redirect to the projects page, focusing the 'In Progress' tab
-      router.push('/?tab=in-progress');
+      router.push('/?tab=in-progress', { scroll: false });
       router.refresh();
 
 
@@ -104,7 +103,7 @@ export function ProjectCard({ project, user }: ProjectCardProps) {
         title: 'Project Completed!',
         description: `"${project.title}" has been moved to completed.`,
       });
-      router.push('/?tab=completed');
+      router.push('/?tab=completed', { scroll: false });
       router.refresh();
     } catch (error) {
       toast({
@@ -159,9 +158,10 @@ export function ProjectCard({ project, user }: ProjectCardProps) {
       if (project.status === 'In Progress') {
         return (
           <div className="flex w-full items-center gap-2">
-            <Button className="w-full" disabled>Project In Progress</Button>
+            <Button className="flex-1" disabled>Project In Progress</Button>
             <Button onClick={handleCompleteProject} aria-label="Mark as Completed">
-              <CheckCircle className="h-4 w-4" />
+              <CheckCircle className="mr-2 h-4 w-4" />
+              Complete
             </Button>
           </div>
         );
