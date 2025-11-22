@@ -136,7 +136,7 @@ service cloud.firestore {
         (
           resource.data.status == 'Open' &&
           request.resource.data.status == 'In Progress' &&
-          hasOnlyKeys(['status'])
+          request.resource.data.keys().hasOnly(['status'])
         )
       );
       allow delete: if isExistingDoc() && isCreator(resource.data);
