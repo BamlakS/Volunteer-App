@@ -129,14 +129,13 @@ service cloud.firestore {
      match /projects/{projectId} {
         allow read: if true;
         allow create: if isSignedIn();
-        // Allow updates by the creator OR a volunteer claiming an open project
         allow update: if isSignedIn() && (
-            // Condition 1: The user is the creator of the project
+            // Condition 1: The user is the creator of the project and can edit it.
+            // Creator cannot be changed after creation.
             (isCreator(resource.data) && request.resource.data.creatorId == resource.data.creatorId) ||
-            // Condition 2: A volunteer is claiming an open project
-            (resource.data.status == 'Open' && request.resource.data.status == 'In Progress' && request.resource.data.keys().hasOnly(['status'])) ||
-            // Condition 3: A user (creator or volunteer) is marking it as completed
-            (resource.data.status == 'In Progress' && request.resource.data.status == 'Completed' && request.resource.data.keys().hasOnly(['status']))
+            // Condition 2: Any authenticated user is updating ONLY the status.
+            // This allows volunteers to claim or complete projects.
+            (hasOnlyKeys(['status']))
         );
         allow delete: if isCreator(resource.data);
     }
