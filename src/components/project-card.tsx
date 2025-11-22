@@ -158,10 +158,12 @@ export function ProjectCard({ project, user }: ProjectCardProps) {
     if (isOwner) {
       if (project.status === 'In Progress') {
         return (
-          <Button className="w-full" onClick={handleCompleteProject}>
-            <CheckCircle className="mr-2 h-4 w-4" />
-            Mark as Completed
-          </Button>
+          <div className="flex w-full items-center gap-2">
+            <Button className="w-full" disabled>Project In Progress</Button>
+            <Button onClick={handleCompleteProject} aria-label="Mark as Completed">
+              <CheckCircle className="h-4 w-4" />
+            </Button>
+          </div>
         );
       }
       if (project.status === 'Completed') {
