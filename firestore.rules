@@ -81,7 +81,7 @@ service cloud.firestore {
     function isChatParticipant(chatId) {
       return isSignedIn() && request.auth.uid in get(/databases/$(database)/documents/chats/$(chatId)).data.participantIds;
     }
-    
+
     /**
      * Checks if incoming data map only contains a specific set of allowed keys.
      */
