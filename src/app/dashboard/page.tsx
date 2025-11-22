@@ -23,6 +23,8 @@ import Image from 'next/image';
 import { volunteers } from '@/lib/data';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
+import { updateDocumentNonBlocking } from '@/firebase/non-blocking-updates';
+import { useToast } from '@/hooks/use-toast';
 
 function StatCard({ title, value, description, icon: Icon }: { title: string, value: string, description: string, icon: React.ElementType }) {
     return (
@@ -41,50 +43,94 @@ function StatCard({ title, value, description, icon: Icon }: { title: string, va
 
 function ActiveProjects({ user }: { user: any }) {
   const firestore = useFirestore();
-  const [projects, setProjects] = React.useState<Project[]>([]);
+  const [projects, setProjects] = React.useState<(Project & { projectVolunteerId: string })[]>([]);
   const [isLoading, setIsLoading] = React.useState(true);
+  const { toast } = useToast();
+  const router = useRouter();
 
-  React.useEffect(() => {
-    async function fetchVolunteerProjects() {
-      if (!user || !firestore) {
-        setIsLoading(false);
-        return;
-      }
-      try {
-        setIsLoading(true);
-        const projectVolunteersQuery = query(
-          collection(firestore, 'projectVolunteers'),
-          where('volunteerId', '==', user.uid)
-        );
-        const querySnapshot = await getDocs(projectVolunteersQuery);
-        const projectIds = querySnapshot.docs.map(d => d.data().projectId);
-
-        if (projectIds.length > 0) {
-          const projectDocs = await Promise.all(
-            projectIds.map(id => getDoc(doc(firestore, 'projects', id)))
-          );
-
-          const fetchedProjects = projectDocs
-            .filter(docSnap => docSnap.exists())
-            .map(docSnap => ({ id: docSnap.id, ...docSnap.data(), status: 'In Progress' } as Project & { status: string }));
-
-          setProjects(fetchedProjects);
-        } else {
-          setProjects([]);
-        }
-      } catch (error: any) {
-        const permissionError = new FirestorePermissionError({
-            path: 'projectVolunteers',
-            operation: 'list',
-          });
-        errorEmitter.emit('permission-error', permissionError);
-      } finally {
-        setIsLoading(false);
-      }
+  const fetchVolunteerProjects = React.useCallback(async () => {
+    if (!user || !firestore) {
+      setIsLoading(false);
+      return;
     }
-    if (user) fetchVolunteerProjects();
-    else setIsLoading(false);
+    try {
+      setIsLoading(true);
+      
+      const projectVolunteersQuery = query(
+        collection(firestore, 'projectVolunteers'),
+        where('volunteerId', '==', user.uid)
+      );
+      const pvSnapshot = await getDocs(projectVolunteersQuery);
+      const userProjectIds = pvSnapshot.docs.map(d => ({projectId: d.data().projectId, projectVolunteerId: d.id}));
+
+      const myCreatedProjectsQuery = query(
+        collection(firestore, 'projects'),
+        where('creatorId', '==', user.uid),
+        where('status', '==', 'In Progress')
+      );
+      const myCreatedProjectsSnapshot = await getDocs(myCreatedProjectsQuery);
+      
+      const myProjects = myCreatedProjectsSnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data(),
+        isOwner: true
+      } as Project & {isOwner?: boolean}));
+
+      if (userProjectIds.length > 0) {
+        const projectIds = userProjectIds.map(p => p.projectId);
+        const projectDocs = await Promise.all(
+          projectIds.map(id => getDoc(doc(firestore, 'projects', id)))
+        );
+
+        const volunteerProjects = projectDocs
+          .filter(docSnap => docSnap.exists() && docSnap.data().status === 'In Progress')
+          .map(docSnap => {
+            const project = { id: docSnap.id, ...docSnap.data() } as Project;
+            return {
+              ...project,
+              projectVolunteerId: userProjectIds.find(p => p.projectId === project.id)!.projectVolunteerId,
+            }
+          });
+          
+        setProjects([...myProjects, ...volunteerProjects] as any);
+      } else {
+        setProjects(myProjects as any);
+      }
+    } catch (error: any) {
+      const permissionError = new FirestorePermissionError({
+          path: 'projectVolunteers',
+          operation: 'list',
+        });
+      errorEmitter.emit('permission-error', permissionError);
+    } finally {
+      setIsLoading(false);
+    }
   }, [user, firestore]);
+  
+  React.useEffect(() => {
+    fetchVolunteerProjects();
+  }, [fetchVolunteerProjects]);
+
+  const handleCompleteProject = async (projectId: string) => {
+    if (!firestore) return;
+    const projectRef = doc(firestore, 'projects', projectId);
+    try {
+      await updateDocumentNonBlocking(projectRef, { status: 'Completed' });
+      toast({
+        title: 'Project Completed!',
+        description: 'The project has been moved to the completed section.',
+      });
+      fetchVolunteerProjects(); // Refresh the list
+      router.refresh();
+    } catch (error) {
+      toast({
+        variant: 'destructive',
+        title: 'Update Failed',
+        description: 'Could not complete the project due to a permission issue.',
+      });
+    }
+  };
+
 
   if (isLoading) {
       return (
@@ -120,26 +166,33 @@ function ActiveProjects({ user }: { user: any }) {
           <CardContent>
               {projects.length === 0 ? (
                    <div className="text-center py-10 border-2 border-dashed rounded-lg">
-                      <p className="text-muted-foreground">You haven't selected any projects yet.</p>
+                      <p className="text-muted-foreground">You have no projects in progress.</p>
                        <Button variant="link" asChild><Link href="/">Browse projects</Link></Button>
                   </div>
               ) : (
-                  <div className="space-y-6">
-                      <div className="grid grid-cols-[2fr,1fr,1fr] items-center gap-4 text-xs text-muted-foreground px-4 font-medium">
+                  <div className="space-y-2">
+                      <div className="grid grid-cols-[2fr,1fr,auto] items-center gap-4 text-xs text-muted-foreground px-4 font-medium">
                           <span>Project</span>
-                          <span className="text-center">Status</span>
-                          <span className="text-right">Commitment</span>
+                          <span className="text-center">Commitment</span>
+                          <span className="text-right">Action</span>
                       </div>
                        {projects.map(project => (
-                          <div key={project.id} className="grid grid-cols-[2fr,1fr,1fr] items-center gap-4 border-t pt-4">
+                          <div key={project.id} className="grid grid-cols-[2fr,1fr,auto] items-center gap-4 border-t py-3 px-4">
                               <div>
                                   <p className="font-semibold">{project.title}</p>
                                   <p className="text-sm text-muted-foreground">{project.creatorName}</p>
                               </div>
-                              <div className="text-center">
-                                  <Badge variant="secondary">{project.status || 'In Progress'}</Badge>
+                              <p className="text-sm text-muted-foreground text-center">{project.estimatedTimeCommitment}</p>
+                              <div className="text-right">
+                                {(project as any).isOwner ? (
+                                    <Button size="sm" onClick={() => handleCompleteProject(project.id)}>
+                                        <CheckCircle className="mr-2 h-4 w-4"/>
+                                        Complete
+                                    </Button>
+                                ) : (
+                                    <Badge variant="secondary">In Progress</Badge>
+                                )}
                               </div>
-                              <p className="text-sm text-muted-foreground text-right">{project.estimatedTimeCommitment}</p>
                           </div>
                        ))}
                   </div>
@@ -238,7 +291,7 @@ function NewOpportunities({ user }: { user: any }) {
                                     <p className="text-sm text-muted-foreground">{project.creatorName}</p>
                                 </div>
                                 <Button asChild variant="outline" size="icon">
-                                    <Link href={`/`}>
+                                    <Link href={`/?tab=open`}>
                                         <ArrowRight className="h-4 w-4" />
                                     </Link>
                                 </Button>
