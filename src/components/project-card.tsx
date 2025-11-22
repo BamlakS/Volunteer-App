@@ -71,7 +71,8 @@ export function ProjectCard({ project, user }: ProjectCardProps) {
       });
 
       // Redirect to the projects page, focusing the 'In Progress' tab
-      router.push('/?tab=in-progress');
+      router.push('/?tab=in-progress', { scroll: false });
+      router.refresh();
 
 
     } catch (error) {
