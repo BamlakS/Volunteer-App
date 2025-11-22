@@ -120,14 +120,15 @@ service cloud.firestore {
     // Project Data (/projects)
     // --------------------------------------------------------------------
     /**
-     * @description Manages public project listings. Any authenticated user can read or write.
+     * @description Manages public project listings. Any user (authenticated or not) can read projects.
      * @path /projects/{projectId}
-     * @allow An authenticated user can read or write to any project.
-     * @deny An unauthenticated user cannot read or write.
-     * @principle Simplified rule to unblock development.
+     * @allow An authenticated user can write to any project. An unauthenticated user can read.
+     * @deny An unauthenticated user cannot write.
+     * @principle Allow public browsing of projects, but require login for interaction.
      */
-    match /projects/{projectId} {
-      allow read, write: if isSignedIn();
+     match /projects/{projectId} {
+      allow read: if true;
+      allow write: if isSignedIn();
     }
 
 
