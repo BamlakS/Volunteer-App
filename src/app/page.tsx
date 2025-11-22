@@ -108,7 +108,6 @@ function HomePageContent() {
   
   const getStatusFromTab = (tabValue: string) => {
     switch (tabValue) {
-      case 'all': return 'All';
       case 'open': return 'Open';
       case 'in-progress': return 'In Progress';
       case 'completed': return 'Completed';
@@ -151,16 +150,16 @@ function HomePageContent() {
             <TabsTrigger value="completed" className="data-[state=active]:shadow-none data-[state=active]:border-b-2 border-primary rounded-none">Completed</TabsTrigger>
           </TabsList>
           <TabsContent value="all" className="mt-6">
-            <ProjectList status="All" />
+            <ProjectList status={getStatusFromTab('all')} />
           </TabsContent>
           <TabsContent value="open" className="mt-6">
-            <ProjectList status="Open" />
+            <ProjectList status={getStatusFromTab('open')} />
           </TabsContent>
           <TabsContent value="in-progress" className="mt-6">
-            <ProjectList status="In Progress" />
+            <ProjectList status={getStatusFromTab('in-progress')} />
           </TabsContent>
           <TabsContent value="completed" className="mt-6">
-            <ProjectList status="Completed" />
+            <ProjectList status={getStatusFromTab('completed')} />
           </TabsContent>
         </Tabs>
       </header>
