@@ -187,10 +187,16 @@ function ActiveProjects({ user }: { user: any }) {
                                 {(project as any).isOwner ? (
                                     <Button size="sm" onClick={() => handleCompleteProject(project.id)}>
                                         <CheckCircle className="mr-2 h-4 w-4"/>
-                                        Complete
+                                        Mark as Completed
                                     </Button>
                                 ) : (
-                                    <Badge variant="secondary">In Progress</Badge>
+                                    <div className="flex items-center justify-end gap-2">
+                                      <Badge variant="secondary">In Progress</Badge>
+                                      <Button size="sm" variant="outline" onClick={() => handleCompleteProject(project.id)}>
+                                          <CheckCircle className="mr-2 h-4 w-4"/>
+                                          Complete
+                                      </Button>
+                                    </div>
                                 )}
                               </div>
                           </div>

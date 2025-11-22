@@ -86,11 +86,11 @@ export function ProjectCard({ project, user }: ProjectCardProps) {
   };
 
   const handleCompleteProject = async () => {
-    if (!user || user.uid !== project.creatorId) {
+    if (!user) {
       toast({
         variant: 'destructive',
         title: 'Unauthorized',
-        description: 'You are not authorized to complete this project.',
+        description: 'You must be logged in to complete a project.',
       });
       return;
     }
@@ -154,30 +154,23 @@ export function ProjectCard({ project, user }: ProjectCardProps) {
   const isOwner = user?.uid === project.creatorId;
 
   const renderFooter = () => {
-    if (isOwner) {
-      if (project.status === 'In Progress') {
+    switch (project.status) {
+      case 'In Progress':
         return (
           <div className="flex gap-2 w-full">
             <Button className="w-full" disabled>Project In Progress</Button>
             <Button onClick={handleCompleteProject} className="w-full bg-green-600 hover:bg-green-700" aria-label="Mark as Completed">
-              Project Completed
+              Mark as Completed
             </Button>
           </div>
         );
-      }
-      if (project.status === 'Completed') {
-        return <Button className="w-full" disabled>Project Completed</Button>;
-      }
-      return <Button className="w-full" disabled>This is your project</Button>;
-    }
-
-    switch (project.status) {
-      case 'In Progress':
-        return <Button className="w-full" disabled>Project In Progress</Button>;
       case 'Completed':
         return <Button className="w-full" disabled>Project Completed</Button>;
       case 'Open':
       default:
+        if (isOwner) {
+          return <Button className="w-full" disabled>This is your project</Button>;
+        }
         return <Button className="w-full" onClick={handleSelectProject}>Select Project</Button>;
     }
   };

@@ -5,7 +5,7 @@
  * Core Philosophy:
  * The rules enforce a mixed security model. Public data, like project listings, is
  * readable by anyone. User-specific data, such as a volunteer's private profile, is strictly
- * confined to the owning user. Writes are restricted to owners.
+ * confined to the owning user. Writes are restricted to owners or specific allowed actions.
  *
  * Data Structure:
  * - /users/{userId}/volunteerProfile/{profileId}: Private data for a specific volunteer.
@@ -14,8 +14,8 @@
  * - /chats/{chatId}/messages/{messageId}: Private messages between participants of a chat.
  *
  * Key Security Decisions:
- * - Public Projects: Projects are public-read, but writes are restricted to the user who created it,
- *   identified by the `creatorId` field in the project document. An exception allows any user to claim an 'Open' project.
+ * - Public Projects: Projects are public-read. Project creation is allowed for any signed-in user.
+ *   Updates are restricted to the project creator or a volunteer claiming an open project.
  * - Chat Security: Access to chat messages is secured by a parent /chats/{chatId} document,
  *   which is assumed to contain a `participantIds` array. This allows rules to efficiently check
  *   if a user is part of a conversation without inspecting every message.
@@ -127,8 +127,18 @@ service cloud.firestore {
      * @principle Allow public browsing of projects, but require login for interaction.
      */
      match /projects/{projectId} {
-      allow read: if true;
-      allow write: if isSignedIn();
+        allow read: if true;
+        allow create: if isSignedIn();
+        // Allow updates by the creator OR a volunteer claiming an open project
+        allow update: if isSignedIn() && (
+            // Condition 1: The user is the creator of the project
+            (isCreator(resource.data) && request.resource.data.creatorId == resource.data.creatorId) ||
+            // Condition 2: A volunteer is claiming an open project
+            (resource.data.status == 'Open' && request.resource.data.status == 'In Progress' && request.resource.data.keys().hasOnly(['status'])) ||
+            // Condition 3: A user (creator or volunteer) is marking it as completed
+            (resource.data.status == 'In Progress' && request.resource.data.status == 'Completed' && request.resource.data.keys().hasOnly(['status']))
+        );
+        allow delete: if isCreator(resource.data);
     }
 
 
