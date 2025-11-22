@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Heart, Clock, User, Trash2 } from 'lucide-react';
+import { Heart, Clock, User, Trash2, CheckCircle } from 'lucide-react';
 import type { Project } from '@/lib/types';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -86,6 +86,35 @@ export function ProjectCard({ project, user }: ProjectCardProps) {
     }
   };
 
+  const handleCompleteProject = async () => {
+    if (!user || user.uid !== project.creatorId) {
+      toast({
+        variant: 'destructive',
+        title: 'Unauthorized',
+        description: 'You are not authorized to complete this project.',
+      });
+      return;
+    }
+
+    const projectRef = doc(firestore, 'projects', project.id);
+
+    try {
+      await updateDocumentNonBlocking(projectRef, { status: 'Completed' });
+      toast({
+        title: 'Project Completed!',
+        description: `"${project.title}" has been moved to completed.`,
+      });
+      router.push('/?tab=completed');
+      router.refresh();
+    } catch (error) {
+      toast({
+        variant: 'destructive',
+        title: 'Update Failed',
+        description: 'Could not complete the project due to a permission issue.',
+      });
+    }
+  };
+
   const toggleFavorite = (e: React.MouseEvent) => {
     e.stopPropagation();
     setIsFavorited(!isFavorited);
@@ -125,22 +154,33 @@ export function ProjectCard({ project, user }: ProjectCardProps) {
 
   const isOwner = user?.uid === project.creatorId;
 
-  const getButtonState = () => {
+  const renderFooter = () => {
     if (isOwner) {
-      return { disabled: true, text: "This is your project" };
+      if (project.status === 'In Progress') {
+        return (
+          <Button className="w-full" onClick={handleCompleteProject}>
+            <CheckCircle className="mr-2 h-4 w-4" />
+            Complete Project
+          </Button>
+        );
+      }
+      if (project.status === 'Completed') {
+        return <Button className="w-full" disabled>Project Completed</Button>;
+      }
+      return <Button className="w-full" disabled>This is your project</Button>;
     }
+
     switch (project.status) {
       case 'In Progress':
-        return { disabled: true, text: 'Project In Progress' };
+        return <Button className="w-full" disabled>Project In Progress</Button>;
       case 'Completed':
-        return { disabled: true, text: 'Project Completed' };
+        return <Button className="w-full" disabled>Project Completed</Button>;
       case 'Open':
       default:
-        return { disabled: false, text: 'Select Project' };
+        return <Button className="w-full" onClick={handleSelectProject}>Select Project</Button>;
     }
   };
 
-  const { disabled, text } = getButtonState();
 
   return (
     <Card className="flex flex-col h-full overflow-hidden transition-transform transform hover:-translate-y-1 hover:shadow-xl duration-300 ease-in-out group">
@@ -223,9 +263,7 @@ export function ProjectCard({ project, user }: ProjectCardProps) {
         )}
       </CardContent>
       <CardFooter>
-        <Button className="w-full" onClick={handleSelectProject} disabled={disabled}>
-          {text}
-        </Button>
+        {renderFooter()}
       </CardFooter>
     </Card>
   );
