@@ -316,17 +316,24 @@ export default function DashboardPage() {
   const firestore = useFirestore();
 
   const [totalProjects, setTotalProjects] = React.useState(0);
+  const [completedProjects, setCompletedProjects] = React.useState(0);
+
 
   React.useEffect(() => {
     if (!loading && !user) {
       router.push('/');
     }
-     const fetchTotalProjects = async () => {
+     const fetchStats = async () => {
         if (!firestore) return;
-        const projectsCol = collection(firestore, 'projects');
         try {
-            const snapshot = await getCountFromServer(projectsCol);
-            setTotalProjects(snapshot.data().count);
+            const projectsCol = collection(firestore, 'projects');
+            const totalSnapshot = await getCountFromServer(projectsCol);
+            setTotalProjects(totalSnapshot.data().count);
+            
+            const completedQuery = query(projectsCol, where('status', '==', 'Completed'));
+            const completedSnapshot = await getCountFromServer(completedQuery);
+            setCompletedProjects(completedSnapshot.data().count);
+
         } catch(e: any) {
             const permissionError = new FirestorePermissionError({
                 path: 'projects',
@@ -335,7 +342,7 @@ export default function DashboardPage() {
             errorEmitter.emit('permission-error', permissionError);
         }
      }
-     if (firestore) fetchTotalProjects();
+     if (firestore) fetchStats();
 
   }, [user, loading, router, firestore]);
   
@@ -363,7 +370,7 @@ export default function DashboardPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 <StatCard title="Total Projects" value={totalProjects.toString()} description="All projects on the platform" icon={Briefcase} />
                 <StatCard title="Volunteers" value={volunteers.length.toString()} description="Ready to help" icon={Users} />
-                <StatCard title="Projects Completed" value="+1" description="Successfully delivered" icon={CheckCircle} />
+                <StatCard title="Projects Completed" value={`+${completedProjects}`} description="Successfully delivered" icon={CheckCircle} />
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">

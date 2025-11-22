@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Heart, Clock, User, Trash2, CheckCircle } from 'lucide-react';
+import { Heart, Clock, User, Trash2 } from 'lucide-react';
 import type { Project } from '@/lib/types';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -85,35 +85,6 @@ export function ProjectCard({ project, user }: ProjectCardProps) {
     }
   };
 
-  const handleCompleteProject = async () => {
-    if (!user) {
-      toast({
-        variant: 'destructive',
-        title: 'Unauthorized',
-        description: 'You must be logged in to complete a project.',
-      });
-      return;
-    }
-
-    const projectRef = doc(firestore, 'projects', project.id);
-
-    try {
-      await updateDocumentNonBlocking(projectRef, { status: 'Completed' });
-      toast({
-        title: 'Project Completed!',
-        description: `"${project.title}" has been moved to completed.`,
-      });
-      router.push('/?tab=completed', { scroll: false });
-      router.refresh();
-    } catch (error) {
-      toast({
-        variant: 'destructive',
-        title: 'Update Failed',
-        description: 'Could not complete the project due to a permission issue.',
-      });
-    }
-  };
-
   const toggleFavorite = (e: React.MouseEvent) => {
     e.stopPropagation();
     setIsFavorited(!isFavorited);
@@ -156,14 +127,7 @@ export function ProjectCard({ project, user }: ProjectCardProps) {
   const renderFooter = () => {
     switch (project.status) {
       case 'In Progress':
-        return (
-          <div className="flex gap-2 w-full">
-            <Button className="w-full" disabled>Project In Progress</Button>
-            <Button onClick={handleCompleteProject} className="w-full bg-green-600 hover:bg-green-700" aria-label="Mark as Completed">
-              Mark as Completed
-            </Button>
-          </div>
-        );
+        return <Button className="w-full" disabled>Project In Progress</Button>;
       case 'Completed':
         return <Button className="w-full" disabled>Project Completed</Button>;
       case 'Open':
